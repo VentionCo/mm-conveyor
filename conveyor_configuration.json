@@ -1,0 +1,155 @@
+{
+    "ListOfAllConveyors": {
+        "Conveyor_1": {
+            "Type": "InfeedConveyor",
+            "EnableConveyor": "True",
+            "conveyorName": "Conv Child",
+            "AxisParameters": {
+                "speed": 200,
+                "acceleration": 200,
+                "deceleration": 200
+            },
+            "boxDetectionSensorName": "LightCurtain",
+            "boxSensorReverseLogic": "False",
+            "pusherConfig": {
+                "pusherName": "nene Pisto",
+                "pusherPresent": "False",
+                "sensorsPresent": "True",
+                "pusherReverseIOLogic": "False",
+                "retractReverseIOLogic": "False",
+                "pusherExtendLogic": "Time_Based",
+                "pusherRetractLogic": "Time_Based",
+                "retractDelay_sec": 2,
+                "extendDelay_sec": 2
+            }
+        },
+        "Conveyor_2": {
+            "Type": "QueueingConveyor",
+            "EnableConveyor": "False",
+            "conveyorName": "New actuator (2)",
+            "AxisParameters": {
+                "speed": 600,
+                "acceleration": 600,
+                "deceleration": 600
+            },
+            "boxDetectionSensorName": "AccumulationC6",
+            "boxSensorReverseLogic": "False"
+        },
+        "Conveyor_3": {
+            "Type": "FollowerConveyor",
+            "EnableConveyor": "False",
+            "conveyorName": "New actuator (2)",
+            "AxisParameters": {
+                "speed": 200,
+                "acceleration": 200,
+                "deceleration": 200
+            }
+        },
+        "Conveyor_4": {
+            "Type": "SimpleConveyor",
+            "EnableConveyor": "False",
+            "conveyorName": "Conv Child",
+            "AxisParameters": {
+                "speed": 200,
+                "acceleration": 200,
+                "deceleration": 200
+            },
+            "boxDetectionSensorName": "LightCurtain",
+            "boxSensorReverseLogic": "False"
+        },
+        "Conveyor_5": {
+            "Type": "TransferConveyor",
+            "EnableConveyor": "False",
+            "conveyorName": "New actuator (2)",
+            "AxisParameters": {
+                "speed": 75,
+                "acceleration": 76,
+                "deceleration": 200
+            },
+            "boxDetectionSensorName": "AccumulationC6",
+            "boxSensorReverseLogic": "False",
+            "pusherConfig": {
+                "pusherName": "Stopper",
+                "pusherPresent": "True",
+                "sensorsPresent": "True",
+                "pusherReverseIOLogic": "False",
+                "retractReverseIOLogic": "False",
+                "pusherExtendLogic": "Time_Based",
+                "pusherRetractLogic": "Time_Based",
+                "retractDelay_sec": 0,
+                "extendDelay_sec": 1
+            }
+        },
+        "Conveyor_6": {
+            "Type": "AccumulatingConveyor",
+            "conveyorName": "Conv Child",
+            "EnableConveyor": "False",
+            "AxisParameters": {
+                "speed": 200,
+                "acceleration": 200,
+                "deceleration": 200
+            },
+            "boxDetectionSensorName": "LightCurtain",
+            "boxSensorReverseLogic": "False",
+            "accumulationSensorName": "AccumulationC6",
+            "accumulationReverseIOLogic": "False",
+            "accumulationTime": 2,
+            "restartTime": 2,
+            "pusherConfig": {
+                "pusherName": "nene Pisto",
+                "pusherPresent": "True",
+                "sensorsPresent": "True",
+                "pusherReverseIOLogic": "False",
+                "retractReverseIOLogic": "False",
+                "pusherExtendLogic": "Time_Based",
+                "pusherRetractLogic": "Time_Based",
+                "retractDelay_sec": 0,
+                "extendDelay_sec": 1
+            }
+        },
+        "Conveyor_7": {
+            "Type": "DoublePickInfeedConveyor",
+            "EnableConveyor": "False",
+            "conveyorName": "Conv Child",
+            "AxisParameters": {
+                "speed": 200,
+                "acceleration": 200,
+                "deceleration": 200
+            },
+            "boxDetectionSensorName": "LightCurtain",
+            "boxDetectionOneReverseIOLogic": "False",
+            "accumulationSensorName": "AccumulationC6",
+            "accumulationReverseIOLogic": "False",
+            "sustainTime": 2,
+            "startupTime": 4,
+            "pacingTime": 1,
+            "pusherConfig": {
+                "pusherPresent": "True",
+                "pusherName": "friendlyName",
+                "sensorPresent": "True",
+                "pushReverseIOLogic": "False",
+                "retractReverseIOLogic": "False",
+                "pusherExtendLogic": "Time_Based",
+                "pusherRetractLogic": "Time_Based",
+                "retractDelay_sec": 0,
+                "extendDelay_sec": 1
+            },
+            "stopperConfig": {
+                "stopperPresent": "True",
+                "sensorPresent": "True",
+                "stopperGateSensorName": "friendlyName",
+                "stopperName": "friendlyName",
+                "stopperGateSensorLogic": "False",
+                "retractStopperLogic": "False",
+                "extendStopperLogic": "False",
+                "stopperExtendLogic": "Time_Based",
+                "stopperRetractLogic": "Signal_Based",
+                "retractDelay_sec": 0,
+                "extendDelay_sec": 1,
+                "retractSignalLogic": "True"
+            },
+            "restartTime": 2
+        }
+
+    }
+}
