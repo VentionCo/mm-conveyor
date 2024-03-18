@@ -1,8 +1,19 @@
-from ast import In
+''' This is the main program for the conveyor control system. 
+It is responsible for creating the conveyor objects and running the main conveyor loop. 
+The main conveyor loop is responsible for running the conveyors and stopping them
+when the drives are not ready or the system is in an estop state.
+The main conveyor loop also checks for the programRun flag and stops the conveyors if set to False.
+The main conveyor loop also checks for the robotIsPicking flag and stops the conveyors 
+if it is set to True. The main conveyor loop also checks for the
+END_PROGRAM flag and stops the conveyors if it is set to True. 
+The main conveyor loop also checks for the CONVEYORS_ARE_RUNNING flag and
+stops the conveyors if it is set to False. 
+'''
+
+import time
 from conveyor_definitions import *
 from conveyors import InfeedConveyor, PickInfeedConveyor, SystemState, ControlAllConveyor
-import time
-from helpers import *
+from helpers import InterThreadBool, get_conveyor_config
 
 system = SystemState()
 
@@ -11,7 +22,7 @@ time.sleep(2)
 configuration_data = get_conveyor_config()
 conveyors = []
 robot_is_picking = InterThreadBool()
-parent = None 
+PARENT = None
 
 for key, conveyor_config in configuration_data[LIST_OF_ALL_CONVEYORS].items():
     if conveyor_config[ENABLE_CONVEYORS] != "True":
@@ -24,11 +35,11 @@ for key, conveyor_config in configuration_data[LIST_OF_ALL_CONVEYORS].items():
     if conveyor_type == "PickInfeedConveyor":
         pickInfeed = PickInfeedConveyor(system, **conveyor_config)
         conveyors.append(pickInfeed)
-        parent = pickInfeed
+        PARENT = pickInfeed
     elif conveyor_type == "InfeedConveyor":
-        infeed_conveyor = InfeedConveyor(system, parent, robot_is_picking, **conveyor_config)
+        infeed_conveyor = InfeedConveyor(system, PARENT, robot_is_picking, **conveyor_config)
         conveyors.append(infeed_conveyor)
-    
+
 for conveyor in conveyors:
     print(conveyor.conveyor_state)
     print(conveyor.system_state.estop)
@@ -43,8 +54,8 @@ conveyors_list = ControlAllConveyor(conveyors)
 programRun = InterThreadBool()
 robotIsPicking = InterThreadBool()
 
-endProgram = False
-conveyors_are_running = False
+END_PROGRAM = False
+CONVEYORS_ARE_RUNNING = False
 prev_time = time.perf_counter()
 
 programRun.set(True)
@@ -55,14 +66,14 @@ try:
         try:
             if programRun.get() and system.drives_are_ready :
                 conveyors_list.run_all()
-                conveyors_are_running = True
+                CONVEYORS_ARE_RUNNING = True
             elif (not system.drives_are_ready or system.estop):
                 conveyors_list.stop_all()
-                conveyors_are_running = False
+                CONVEYORS_ARE_RUNNING = False
                 programRun.set(False)
             else:
                 programRun.set(True)
-    
+
         except Exception as e:
             conveyors_list.stop_all()
             print(e)
@@ -75,4 +86,4 @@ try:
 except KeyboardInterrupt:
     conveyors_list.stop_all()
     print("Keyboard Interrupt")
-    pass
+    END_PROGRAM = True
