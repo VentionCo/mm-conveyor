@@ -51,28 +51,27 @@ for conveyor in conveyors:
 
 conveyors_list = ControlAllConveyor(conveyors)
 
-programRun = InterThreadBool()
-robotIsPicking = InterThreadBool()
+program_run = InterThreadBool()
 
 END_PROGRAM = False
 CONVEYORS_ARE_RUNNING = False
 prev_time = time.perf_counter()
 
-programRun.set(True)
+program_run.set(True)
 try:
 
     while True:
 
         try:
-            if programRun.get() and system.drives_are_ready :
+            if program_run.get() and system.drives_are_ready :
                 conveyors_list.run_all()
                 CONVEYORS_ARE_RUNNING = True
             elif (not system.drives_are_ready or system.estop):
                 conveyors_list.stop_all()
                 CONVEYORS_ARE_RUNNING = False
-                programRun.set(False)
+                program_run.set(False)
             else:
-                programRun.set(True)
+                program_run.set(True)
 
         except Exception as e:
             conveyors_list.stop_all()

@@ -1,5 +1,5 @@
 '''
-Definitions for the conveyors
+Definitions for the different types of conveyors
 '''
 from enum import Enum
 from abc import ABC, abstractmethod
@@ -74,7 +74,6 @@ class ConveyorState(Enum):
     PACING = 7
     QUEUEING = 8
     WAITING = 9
-
 
 class Conveyor(ABC):
     ''' Base class for all conveyors. 
@@ -396,7 +395,6 @@ class Conveyor(ABC):
         '''
         return self.conveyor_state
 
-
 class InfeedConveyor(Conveyor):
     '''
     InfeedConveyor class is used to control the infeed conveyor.
@@ -494,12 +492,14 @@ class InfeedConveyor(Conveyor):
         if self.pusher_present:
             self.pusher.idle_async()
 
-
 class PickInfeedConveyor(Conveyor):
     """
     This class is used to control the infeed conveyor for the pick station.
     """
-    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool = InterThreadBool(), **kwargs):
+    def __init__(self, 
+                 system_state: SystemState, 
+                 robot_is_picking: InterThreadBool = InterThreadBool(),
+                 **kwargs):
         super().__init__(system_state, **kwargs)
         self.drives_are_ready = self.system_state.drives_are_ready
         self.robot_is_picking = robot_is_picking
@@ -508,7 +508,7 @@ class PickInfeedConveyor(Conveyor):
         self.initialize_pusher(kwargs)
 
         self.restart_conveyor_timer = Timer(kwargs.get(RESTART_TIME))
-        self.boxes_to_queue = 2 
+        self.boxes_to_queue = 2
         self.box_was_picked = False
 
     def initialize_timers(self, **kwargs):
@@ -538,7 +538,7 @@ class PickInfeedConveyor(Conveyor):
                 self.pusher.pull_async()
             if self.stopper_state("pushed"):
                 self.stopper.push_async()
-            
+
             if self.drives_are_ready and self.pusher_state("pulled"):
                 if not self.startup_timer.started:
                     self.startup_timer.start()
@@ -546,7 +546,8 @@ class PickInfeedConveyor(Conveyor):
                 self.conveyor_state = ConveyorState.STARTUP
 
         elif self.conveyor_state == ConveyorState.STARTUP:
-            if self.startup_timer.done() or (self.get_box_sensor_state() and self.get_accumulation_sensor_state()):
+            if self.startup_timer.done() or \
+            (self.get_box_sensor_state() and self.get_accumulation_sensor_state()):
                 self.startup_timer.stop()
                 if self.box_sensor.state.value:
                     self.boxes_to_queue -= 1
@@ -631,7 +632,6 @@ class PickInfeedConveyor(Conveyor):
             self.pusher.idle_async()
         if self.stopper_present:
             self.stopper.push_async()
-
 
 class ControlAllConveyor:
     '''
