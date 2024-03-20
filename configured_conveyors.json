@@ -1,53 +1,41 @@
 {
     "ListOfAllConveyors": {
         "Conveyor_2": {
-            "Type": "PickInfeedConveyor",
+            "Type": "SimplePickConveyor",
             "EnableConveyor": "True",
-            "conveyorName": "Conv Child",
+            "conveyorName": "Pick",
             "AxisParameters": {
                 "speed": 200,
                 "acceleration": 200,
                 "deceleration": 200
             },
-            "boxDetectionSensorName": "LightCurtain",
-            "boxDetectionOneReverseIOLogic": "False",
-            "sustainTime": 2,
-            "startupTime": 4,
-            "pacingTime": 1,
+            "boxDetectionSensorName": "Pick",
+            "boxSensorReverseLogic": "False",
             "pusherConfig": {
                 "pusherPresent": "True",
-                "pusherName": "friendlyName",
-                "sensorPresent": "True",
+                "pusherName": "PushPick",
+                "sensorsPresent": "True",
                 "pushReverseIOLogic": "False",
                 "retractReverseIOLogic": "False",
-                "pusherExtendLogic": "Time_Based",
-                "pusherRetractLogic": "Time_Based",
+                "pusherExtendLogic": "Sensor_Based",
+                "pusherRetractLogic": "Sensor_Based",
                 "retractDelay_sec": 0,
                 "extendDelay_sec": 1
             }
         },
         "Conveyor_1": {
-            "Type": "InfeedConveyor",
+            "Type": "SimpleInfeedConveyor",
             "EnableConveyor": "True",
-            "conveyorName": "Conv Child",
+            "conveyorName": "Infeed",
             "AxisParameters": {
                 "speed": 200,
                 "acceleration": 200,
                 "deceleration": 200
             },
-            "boxDetectionSensorName": "LightCurtain",
+            "boxDetectionSensorName": "Infeed",
             "boxSensorReverseLogic": "False",
-            "pusherConfig": {
-                "pusherName": "nene Pisto",
-                "pusherPresent": "False",
-                "sensorsPresent": "True",
-                "pusherReverseIOLogic": "False",
-                "retractReverseIOLogic": "False",
-                "pusherExtendLogic": "Time_Based",
-                "pusherRetractLogic": "Time_Based",
-                "retractDelay_sec": 2,
-                "extendDelay_sec": 2
-            }
+            "startSensorName": "StartInput",
+            "startSensorReverseLogic": "False"
         }
     }
 }

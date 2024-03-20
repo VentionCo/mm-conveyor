@@ -35,7 +35,7 @@ class InterThreadBool:
 
 
 def get_conveyor_config():
-    conveyor_configuration_path = "conveyors/conveyor_configuration.json"
+    conveyor_configuration_path = "configured_conveyors.json"
     with open(conveyor_configuration_path) as f:
         configuration_data = json.load(f)
     return configuration_data

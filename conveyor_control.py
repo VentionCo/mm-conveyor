@@ -12,10 +12,24 @@ stops the conveyors if it is set to False.
 
 import time
 from conveyor_definitions import *
-from conveyors import InfeedConveyor, PickInfeedConveyor, SystemState, ControlAllConveyor
+from conveyors import SimpleInfeedConveyor, SimplePickConveyor, SystemState, ControlAllConveyor
 from helpers import InterThreadBool, get_conveyor_config
 
 system = SystemState()
+
+"""
+TODO:
+REQUIREMENTS: 
+- 1 MM
+- I IO module
+- 3 photo sensors (1 pick, 1 infeed start IS, 1 infeed stop)
+
+Description of the infeed and pick conveyor: 
+    the infeed conveyor starts rolling when IS is detected (infeed start sensor), this will also start the pick conveyor
+    the pick will stop when the pick sensor is detected, 
+    the infeed conveyor will stop when the infeed stop sensor is detected
+"""
+
 
 time.sleep(2)
 
@@ -32,12 +46,12 @@ for key, conveyor_config in configuration_data[LIST_OF_ALL_CONVEYORS].items():
     print(conveyor_type)
     print(conveyor_config)
 
-    if conveyor_type == "PickInfeedConveyor":
-        pickInfeed = PickInfeedConveyor(system, **conveyor_config)
+    if conveyor_type == "SimplePickConveyor":
+        pickInfeed = SimplePickConveyor(system, **conveyor_config)
         conveyors.append(pickInfeed)
         PARENT = pickInfeed
-    elif conveyor_type == "InfeedConveyor":
-        infeed_conveyor = InfeedConveyor(system, PARENT, robot_is_picking, **conveyor_config)
+    elif conveyor_type == "SimpleInfeedConveyor":
+        infeed_conveyor = SimpleInfeedConveyor(system, PARENT, **conveyor_config)
         conveyors.append(infeed_conveyor)
 
 for conveyor in conveyors:
@@ -60,13 +74,17 @@ prev_time = time.perf_counter()
 program_run.set(True)
 try:
 
+    while not infeed_conveyor.get_start_sensor_state():
+        print("Waiting for start sensor")
+        time.sleep(1)
+
     while True:
 
         try:
             if program_run.get() and system.drives_are_ready :
                 conveyors_list.run_all()
                 CONVEYORS_ARE_RUNNING = True
-            elif (not system.drives_are_ready or system.estop):
+            elif not system.drives_are_ready or system.estop:
                 conveyors_list.stop_all()
                 CONVEYORS_ARE_RUNNING = False
                 program_run.set(False)
