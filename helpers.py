@@ -1,4 +1,5 @@
-import json
+
+
 class InterThreadBool:
     """Boolean which can be exchanged between threads or classes (Similar to c++ pointers)
     """
@@ -34,8 +35,4 @@ class InterThreadBool:
         self.__value = value
 
 
-def get_conveyor_config():
-    conveyor_configuration_path = "configured_conveyors.json"
-    with open(conveyor_configuration_path) as f:
-        configuration_data = json.load(f)
-    return configuration_data
+

@@ -1,6 +1,7 @@
-'''
+"""
 Definitions for the different types of conveyors
-'''
+"""
+
 from enum import Enum
 from abc import ABC, abstractmethod
 from machinelogic import Machine, MachineException
@@ -46,6 +47,7 @@ class SystemState:
         self.estop = False
         self.subscribe_to_estop()
         self.subscribe_to_drive_readiness()
+        self.program_run = False
 
     def subscribe_to_estop(self):
         """ Subscribes to the estop/status topic on the mqtt broker. When a message is received on this topic,
@@ -76,6 +78,22 @@ class SystemState:
             self.drives_are_ready = False
         else:
             print(f"Unexpected payload received in smartDriveCallback: {payload}")
+
+    def start_conveyors(self):
+        self.program_run = True
+
+    def stop_conveyors(self):
+        self.program_run = False
+
+    def subscribe_to_control_topics(self):
+        machine.on_mqtt_event('conveyors/control/start', self.on_start_command)
+        machine.on_mqtt_event('conveyors/control/stop', self.on_stop_command)
+
+    def on_start_command(self, topic, payload):
+        self.start_conveyors()
+
+    def on_stop_command(self, topic, payload):
+        self.stop_conveyors()
 
 
 class ConveyorState(Enum):
@@ -429,15 +447,6 @@ class SimpleInfeedConveyor(Conveyor):
         super().__init__(system_state, **kwargs)
         self.initialize_box_sensor(kwargs)
         self.parent_conveyor = parentConveyor
-        self.start_sensor = machine.get_input(kwargs.get('startSensorName'))
-        self.start_reverse_logic = kwargs.get('startSensorReverseLogic').lower() == 'true'
-
-    def get_start_sensor_state(self):
-        state = self.start_sensor.state.value
-        if self.start_reverse_logic:
-            return not state
-        else:
-            return state
 
     def run(self):
         if not self.system_state.drives_are_ready and self.system_state.estop:
@@ -504,6 +513,422 @@ class SimplePickConveyor(Conveyor):
         self.stop_conveyor()
         if self.pusher_present:
             self.pusher.idle_async()
+
+
+class SimpleConveyor(Conveyor):
+    def __init__(self, system_state: SystemState, **kwargs):
+        super().__init__(system_state, **kwargs)
+        self.initialize_box_sensor(kwargs)
+
+    def run(self):
+        if not self.system_state.drives_are_ready or self.system_state.estop:
+            self.conveyor_state = ConveyorState.INIT
+            self.stop_conveyor()
+
+        elif self.get_box_sensor_state():
+            self.stop()
+
+        else:
+            self.conveyor_state = ConveyorState.RUNNING
+            self.move_conveyor()
+
+    def stop(self):
+        self.conveyor_state = ConveyorState.STOPPING
+        self.stop_conveyor()
+
+
+class InfeedConveyor(Conveyor):
+    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool = InterThreadBool(), **kwargs):
+        super().__init__(system_state, **kwargs)
+
+        self.initialize_box_sensor(kwargs)
+        self.initialize_pusher(kwargs)
+
+        self.robot_is_picking = robot_is_picking
+        self.restart_conveyor_timer = Timer(self.pusher_retract_delay)
+        self.not_moving = True
+
+    def run(self):
+        if not self.system_state.drives_are_ready and self.system_state.estop:
+            self.conveyor_state = ConveyorState.INIT
+            if self.pusher_present:
+                self.pusher.pull_async()
+        if self.conveyor_state == ConveyorState.INIT:
+            if self.pusher_state("pushed"):
+                self.pusher.pull_async()
+                self.conveyor_state = ConveyorState.RETRACT
+            if self.pusher_state("pulled"):
+                self.move_conveyor()
+                self.not_moving = False
+                self.conveyor_state = ConveyorState.RUNNING
+
+        if self.conveyor_state == ConveyorState.RUNNING:
+            if self.pusher_present:
+                self.pusher.idle_async()
+            if self.get_box_sensor_state():
+                self.stop()
+                self.not_moving = True
+                self.conveyor_state = ConveyorState.STOPPING
+
+        elif self.conveyor_state == ConveyorState.STOPPING:
+            self.not_moving = True
+            if self.pusher_present:
+                self.conveyor_state = ConveyorState.PUSHING
+            else:
+                self.conveyor_state = ConveyorState.WAITING_FOR_PICK
+
+        elif self.conveyor_state == ConveyorState.PUSHING:
+            self.not_moving = True
+            self.pusher.push_async()
+            if self.pusher_state("pushed"):
+                self.pusher.idle_async()
+                self.conveyor_state = ConveyorState.RETRACT
+
+        elif self.conveyor_state == ConveyorState.RETRACT:
+            self.not_moving = True
+            self.pusher.pull_async()
+            if self.pusher_state("pulled"):
+                self.pusher.idle_async()
+                self.conveyor_state = ConveyorState.WAITING_FOR_PICK
+
+        elif self.conveyor_state == ConveyorState.WAITING_FOR_PICK:
+            self.not_moving = True
+            if not self.get_box_sensor_state() and not self.robot_is_picking.get() and not self.restart_conveyor_timer.started:
+                self.restart_conveyor_timer.start()
+            if self.restart_conveyor_timer.done():
+                self.restart_conveyor_timer.stop()
+                self.move_conveyor()
+                self.conveyor_state = ConveyorState.RUNNING
+
+    def stop(self):
+        self.conveyor_state = ConveyorState.INIT
+        self.stop_conveyor()
+        self.restart_conveyor_timer.stop()
+        if self.pusher_present:
+            self.pusher.idle_async()
+
+
+class AccumulatingConveyor(Conveyor):
+    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool = InterThreadBool(), **kwargs):
+        super().__init__(system_state, **kwargs)
+
+        self.initialize_pusher(kwargs)
+
+        self.initialize_box_sensor(kwargs)
+        self.initialize_accumulation_sensor(kwargs)
+
+        self.box_was_picked = False
+        self.is_first_box_ready_for_pick = False
+        self.restart_conveyor_timer = Timer(kwargs.get(RESTART_TIME))
+        self.accumulationConveyorTimer = Timer(kwargs.get(ACCUMULATION_TIME))
+
+        self.robot_is_picking = robot_is_picking
+
+    def run(self):
+        if not self.system_state.drives_are_ready and self.system_state.estop:
+            self.conveyor_state = ConveyorState.INIT
+            if self.pusher_present:
+                self.pusher.pull_async()
+
+        if self.conveyor_state == ConveyorState.INIT:
+            self.is_first_box_ready_for_pick = False
+            if self.pusher_state("pushed"):
+                self.pusher.pull_async()
+            if self.pusher_state("pulled"):
+                self.move_conveyor()
+                self.conveyor_state = ConveyorState.RUNNING
+
+        if self.conveyor_state == ConveyorState.RUNNING:
+            if self.get_box_sensor_state() and self.get_accumulation_sensor_state():
+                if self.accumulationConveyorTimer.paused:
+                    self.accumulationConveyorTimer.unpause()
+                elif not self.accumulationConveyorTimer.started:
+                    self.accumulationConveyorTimer.start()
+            else:
+                self.accumulationConveyorTimer.pause()
+
+            if self.pusher_present and self.get_box_sensor_state() and not self.is_first_box_ready_for_pick:
+                self.stop_conveyor()
+                self.accumulationConveyorTimer.pause()
+                self.conveyor_state = ConveyorState.PUSHING
+            elif self.accumulationConveyorTimer.done():
+                self.stop_conveyor()
+                self.accumulationConveyorTimer.stop()
+                self.conveyor_state = ConveyorState.STOPPING
+
+        elif self.conveyor_state == ConveyorState.PUSHING:
+            self.pusher.push_async()
+            if self.pusher_state("pushed"):
+                self.pusher.idle_async()
+                self.conveyor_state = ConveyorState.RETRACT
+
+        elif self.conveyor_state == ConveyorState.RETRACT:
+            self.pusher.pull_async()
+            self.is_first_box_ready_for_pick = True
+            if self.pusher_state("pulled"):
+                self.pusher.idle_async()
+                self.move_conveyor()
+                self.conveyor_state = ConveyorState.RUNNING
+
+        elif self.conveyor_state == ConveyorState.STOPPING:
+            if self.pusher_state("pushed"):
+                self.pusher.pull_async()
+            if self.pusher_state("pulled"):
+                self.pusher.idle_async()
+                self.box_was_picked = False
+                self.conveyor_state = ConveyorState.WAITING_FOR_PICK
+
+        elif self.conveyor_state == ConveyorState.WAITING_FOR_PICK:
+            self.is_first_box_ready_for_pick = False
+            if not self.get_box_sensor_state():
+                self.box_was_picked = True
+            if self.box_was_picked and not self.robot_is_picking.get() and not self.restart_conveyor_timer.started:
+                self.restart_conveyor_timer.start()
+            if self.restart_conveyor_timer.done():
+                self.restart_conveyor_timer.stop()
+                self.move_conveyor()
+                self.conveyor_state = ConveyorState.RUNNING
+
+        if self.robot_is_picking.get():
+            if self.conveyor_state == ConveyorState.RUNNING and self.is_first_box_ready_for_pick:
+                self.stop_conveyor()
+                self.conveyor_state = ConveyorState.STOPPING
+
+    def stop(self):
+        self.conveyor_state = ConveyorState.INIT
+        self.stop_conveyor()
+        self.restart_conveyor_timer.stop()
+        self.accumulationConveyorTimer.stop()
+        if self.pusher_present:
+            self.pusher.idle_async()
+
+
+class DoublePickInfeedConveyor(Conveyor):
+
+    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool = InterThreadBool(), **kwargs):
+        super().__init__(system_state, **kwargs)
+        self.pacingTimer = None
+        self.sustainTimer = None
+        self.startup_timer = None
+        self.initialize_timers(**kwargs)
+        self.initialize_box_sensor(kwargs)
+        self.initialize_accumulation_sensor(kwargs)
+        self.initialize_pusher(kwargs)
+        self.initialize_stopper(kwargs)
+
+        self.restart_conveyor_timer = Timer(kwargs.get(RESTART_TIME))
+        self.boxes_to_queue = 2
+        self.box_was_picked = False
+        self.robot_is_picking = robot_is_picking
+
+    def initialize_timers(self, **kwargs):
+        self.startup_timer = Timer(kwargs.get(STARTUP_TIME))
+        self.sustainTimer = Timer(kwargs.get(SUSTAIN_TIME))
+        self.pacingTimer = Timer(kwargs.get(PACING_TIME))
+
+    def run(self):
+        if not self.system_state.drives_are_ready and not self.system_state.estop:
+            self.conveyor_state = ConveyorState.INIT
+            if self.pusher_present:
+                self.pusher.pull_async()
+            if self.stopper_present:
+                self.stopper.pull_async()
+
+        if self.conveyor_state == ConveyorState.INIT:
+            if self.pusher_state("pulled"):
+                self.pusher.pull_async()
+            if self.stopper_state("pushed"):
+                self.stopper.push_async()
+
+            if self.system_state.drives_are_ready and self.pusher_state("pulled"):
+                if not self.startup_timer.started:
+                    self.startup_timer.start()
+                self.boxes_to_queue = 2
+                self.conveyor_state = ConveyorState.STARTUP
+
+        elif self.conveyor_state == ConveyorState.STARTUP:
+            if self.startup_timer.done() or (self.get_box_sensor_state() and self.get_accumulation_sensor_state()):
+                self.startup_timer.stop()
+                if self.get_box_sensor_state():
+                    self.boxes_to_queue -= 1
+                if self.get_accumulation_sensor_state():
+                    self.boxes_to_queue -= 1
+                if self.boxes_to_queue < 0:
+                    print("ERROR: More boxes detected than expected")
+                    raise Exception("ERROR: More boxes detected than expected")
+                if self.boxes_to_queue > 0:
+                    self.stopper.idle_async()
+                    print("[Startup] Boxes to queue: " + str(self.boxes_to_queue))
+                    self.conveyor_state = ConveyorState.QUEUEING
+
+        elif self.conveyor_state == ConveyorState.QUEUEING:
+            self.stopper.pull_async()
+            if self.stopper_sensor_present and self.stopper_sensor.state.value:
+                self.boxes_to_queue -= 1
+            if self.boxes_to_queue == 0:
+                self.stopper.idle_async()
+                self.move_conveyor()
+                self.conveyor_state = ConveyorState.RUNNING
+
+        elif self.conveyor_state == ConveyorState.RUNNING:
+            self.stopper.push_async()
+            if self.get_box_sensor_state() and self.get_accumulation_sensor_state() and not self.sustainTimer.started:
+                self.sustainTimer.start()
+            if self.sustainTimer.done():
+                self.sustainTimer.stop()
+                self.stop_conveyor()
+                self.conveyor_state = ConveyorState.PUSHING
+
+        elif self.conveyor_state == ConveyorState.PUSHING:
+            if not self.pusher_present:
+                self.conveyor_state = ConveyorState.WAITING_FOR_PICK
+            else:
+                self.pusher.push_async()
+                if self.pusher_state("pushed"):
+                    self.pusher.idle_async()
+                    self.conveyor_state = ConveyorState.RETRACT
+
+        elif self.conveyor_state == ConveyorState.RETRACT:
+            self.pusher.pull_async()
+            if self.pusher_state("pulled"):
+                self.pusher.idle_async()
+                self.box_was_picked = False
+                self.conveyor_state = ConveyorState.WAITING_FOR_PICK
+
+        elif self.conveyor_state == ConveyorState.WAITING_FOR_PICK:
+            if not self.get_box_sensor_state() or not self.get_accumulation_sensor_state():
+                self.box_was_picked = True
+            if self.box_was_picked and not self.robot_is_picking.get() and not self.restart_conveyor_timer.started:
+                self.restart_conveyor_timer.start()
+            if self.restart_conveyor_timer.done():
+                self.restart_conveyor_timer.stop()
+                self.boxes_to_queue = 2
+                if self.get_box_sensor_state():
+                    self.boxes_to_queue -= 1
+                if self.get_accumulation_sensor_state():
+                    self.boxes_to_queue -= 1
+                self.move_conveyor()
+                if self.pacingTimer.started:
+                    self.pacingTimer.start()
+                self.conveyor_state = ConveyorState.PACING
+
+        elif self.conveyor_state == ConveyorState.PACING:
+            if self.pacingTimer.done():
+                self.pacingTimer.stop()
+                if self.boxes_to_queue > 0:
+                    self.stopper.idle_async()
+                print("[Pacing] Boxes to queue: " + str(self.boxes_to_queue))
+                self.conveyor_state = ConveyorState.QUEUEING
+
+    def stop(self):
+        self.conveyor_state = ConveyorState.INIT
+        self.stop_conveyor()
+        self.restart_conveyor_timer.stop()
+        self.startup_timer.stop()
+        self.sustainTimer.stop()
+        self.pacingTimer.stop()
+
+        if self.pusher_present:
+            self.pusher.idle_async()
+        if self.stopper_present:
+            self.stopper.push_async()
+
+
+class FollowerConveyor(Conveyor):
+    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, **kwargs):
+        super().__init__(system_state, **kwargs)
+
+        self.initialize_actuator(kwargs)
+        self.parentConveyor = parentConveyor
+        self.conveyor_state = parentConveyor.conveyor_state
+
+    def run(self):
+        if self.parentConveyor.conveyor_state == ConveyorState.RUNNING:
+            self.conveyor_state = self.parentConveyor.conveyor_state
+            self.move_conveyor()
+        else:
+            self.stop()
+
+    def stop(self):
+        self.conveyor_state = ConveyorState.STOPPING
+        self.stop_conveyor()
+
+
+class QueueingConveyor(Conveyor):
+    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, **kwargs):
+        super().__init__(system_state, **kwargs)
+        self.initialize_box_sensor(kwargs)
+        self.parentConveyor = parentConveyor
+        self.conveyor_state = parentConveyor.conveyor_state
+
+    def run(self):
+        if self.parentConveyor.conveyor_state == ConveyorState.RUNNING:
+            self.conveyor_state = self.parentConveyor.conveyor_state
+            self.move_conveyor()
+        else:
+            if self.box_sensor.state.value:
+                self.stop()
+
+    def stop(self):
+        self.conveyor_state = ConveyorState.STOPPING
+        self.stop_conveyor()
+
+
+class TransferConveyor(Conveyor):
+    def __init__(self, system_state: SystemState, parentConveyor: InfeedConveyor, **kwargs):
+        super().__init__(system_state, **kwargs)
+        self.initialize_box_sensor(kwargs)
+        self.initialize_pusher(kwargs)
+        self.parentConveyor = parentConveyor
+        self.conveyor_state = ConveyorState.INIT
+
+    def run(self):
+        if not self.system_state.drives_are_ready and not self.system_state.estop:
+            self.conveyor_state = ConveyorState.INIT
+            if self.pusher_present:
+                self.pusher.pull_async()
+
+        if self.conveyor_state == ConveyorState.INIT:
+            if self.pusher_state("pushed"):
+                self.pusher.pull_async()
+            if self.system_state.drives_are_ready:
+                self.move_conveyor()
+                self.conveyor_state = ConveyorState.RUNNING
+
+        elif self.conveyor_state == ConveyorState.RUNNING:
+            if self.box_sensor.state.value:
+                self.stop()
+
+        elif self.conveyor_state == ConveyorState.STOPPING:
+            if self.pusher_present and (
+                    self.conveyor_state == ConveyorState.STOPPING and self.parentConveyor.conveyor_state == ConveyorState.RUNNING):
+                self.conveyor_state = ConveyorState.PUSHING
+            elif not self.pusher_present:
+                self.conveyor_state = ConveyorState.WAITING
+            if not self.box_sensor.state.value:
+                self.move_conveyor()
+                self.conveyor_state = ConveyorState.RUNNING
+
+        elif self.conveyor_state == ConveyorState.PUSHING:
+            self.pusher.push_async()
+            if self.pusher_state("pushed"):
+                self.pusher.idle_async()
+                self.conveyor_state = ConveyorState.RETRACT
+
+        elif self.conveyor_state == ConveyorState.RETRACT:
+            self.pusher.pull_async()
+            if self.pusher_state("pulled"):
+                self.pusher.idle_async()
+                self.conveyor_state = ConveyorState.WAITING
+
+        elif self.conveyor_state == ConveyorState.WAITING:
+            if not self.box_sensor.state.value:
+                self.move_conveyor()
+                self.conveyor_state = ConveyorState.RUNNING
+
+    def stop(self):
+        self.conveyor_state = ConveyorState.STOPPING
+        self.stop_conveyor()
 
 
 class ControlAllConveyor:

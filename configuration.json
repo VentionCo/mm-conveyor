@@ -1,0 +1,124 @@
+{
+  "name": "#global",
+  "version": 14,
+  "deployedByMachineCloud": false,
+  "uuid": "a67c6d9b-702a-478d-a9f2-e878108b2554",
+  "initialSequence": "#startup",
+  "sequences": [
+    {
+      "name": "#startup",
+      "type": "Sequence",
+      "parameters": {
+        "parentController": "eeffa75f-87dd-4065-8505-e5f2101b07f0"
+      },
+      "instructions": [
+        {
+          "name": "controller",
+          "category": "config",
+          "parameters": {
+            "friendlyName": "boss",
+            "uuid": "eeffa75f-87dd-4065-8505-e5f2101b07f0",
+            "ipAddress": "192.168.1.3",
+            "hardwareVersion": "V2"
+          }
+        },
+        {
+          "name": "pneumaticAxis",
+          "category": "config",
+          "parameters": {
+            "uuid": "ba7da265-e936-41bc-9f45-b03533ae7a37",
+            "controllerId": "eeffa75f-87dd-4065-8505-e5f2101b07f0",
+            "friendlyName": "Infeed",
+            "device": 8,
+            "pushOutPin": 0,
+            "pullOutPin": 1,
+            "axisType": "ac_motor_with_vfd"
+          }
+        },
+        {
+          "name": "pneumaticAxis",
+          "category": "config",
+          "parameters": {
+            "uuid": "8fbc0a3f-c0f6-4c63-9e88-7b0cc33c03fc",
+            "controllerId": "eeffa75f-87dd-4065-8505-e5f2101b07f0",
+            "friendlyName": "Pick",
+            "device": 1,
+            "pushOutPin": 0,
+            "pullOutPin": 1,
+            "axisType": "ac_motor_with_vfd"
+          }
+        },
+        {
+          "name": "pneumaticAxis",
+          "category": "config",
+          "parameters": {
+            "uuid": "c11db945-78ba-4769-aa9d-853a132bde69",
+            "controllerId": "eeffa75f-87dd-4065-8505-e5f2101b07f0",
+            "friendlyName": "PushPick",
+            "device": 8,
+            "pushInPin": 1,
+            "pullInPin": 0,
+            "pushOutPin": 2,
+            "pullOutPin": 3,
+            "axisType": "pneumatic"
+          }
+        },
+        {
+          "name": "alias",
+          "category": "config",
+          "parameters": {
+            "uuid": "e94843a7-4a51-4181-971f-81f40127fc13",
+            "category": "input",
+            "deviceType": "digitalIOModule",
+            "controllerId": "eeffa75f-87dd-4065-8505-e5f2101b07f0",
+            "aliasName": "Pick",
+            "parameters": {
+              "device": 8,
+              "pin": 2
+            }
+          }
+        },
+        {
+          "name": "alias",
+          "category": "config",
+          "parameters": {
+            "uuid": "e25892c6-558c-4d01-9cf1-354a82fe4e60",
+            "category": "input",
+            "deviceType": "digitalIOModule",
+            "controllerId": "eeffa75f-87dd-4065-8505-e5f2101b07f0",
+            "aliasName": "Infeed",
+            "parameters": {
+              "device": 8,
+              "pin": 3
+            }
+          }
+        },
+        {
+          "name": "alias",
+          "category": "config",
+          "parameters": {
+            "uuid": "57a8245f-dee5-49b9-b1e4-0c722b927494",
+            "category": "input",
+            "deviceType": "digitalIOModule",
+            "controllerId": "eeffa75f-87dd-4065-8505-e5f2101b07f0",
+            "aliasName": "StartInput",
+            "parameters": {
+              "device": 1,
+              "pin": 2
+            }
+          }
+        }
+      ],
+      "robotParameters": {
+        "clips": []
+      },
+      "isInlineSequence": false
+    }
+  ],
+  "breakpoints": {},
+  "autoLaunch": false,
+  "parameters": [],
+  "terminationConditions": {},
+  "error": null,
+  "assets": []
+}

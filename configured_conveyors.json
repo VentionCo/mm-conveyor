@@ -23,7 +23,7 @@
                 "extendDelay_sec": 1
             }
         },
-        "Conveyor_1": {
+        "Conveyor_4": {
             "Type": "SimpleInfeedConveyor",
             "EnableConveyor": "True",
             "conveyorName": "Infeed",
@@ -33,9 +33,7 @@
                 "deceleration": 200
             },
             "boxDetectionSensorName": "Infeed",
-            "boxSensorReverseLogic": "False",
-            "startSensorName": "StartInput",
-            "startSensorReverseLogic": "False"
+            "boxSensorReverseLogic": "False"
         }
     }
 }
