@@ -1,7 +1,7 @@
 {
     "ListOfAllConveyors": {
         "Conveyor_2": {
-            "Type": "SimplePickConveyor",
+            "Type": "SimpleConveyor",
             "EnableConveyor": "True",
             "conveyorName": "Pick",
             "AxisParameters": {
@@ -24,7 +24,7 @@
             }
         },
         "Conveyor_4": {
-            "Type": "SimpleInfeedConveyor",
+            "Type": "SimpleConveyor",
             "EnableConveyor": "True",
             "conveyorName": "Infeed",
             "AxisParameters": {

@@ -4,14 +4,11 @@ Definitions for the different types of conveyors
 
 from enum import Enum
 from abc import ABC, abstractmethod
-from machinelogic import Machine, MachineException
+
 from conveyor_definitions import *
 from helpers import InterThreadBool
 from timer_helper import Timer
-
-# machine = Machine('http://192.168.7.2:3100', 'ws://192.168.7.2:9001')
-
-machine = Machine()
+from machinelogic import MachineException
 
 
 class SystemState:
@@ -36,12 +33,13 @@ class SystemState:
             It sets the drives_are_ready variable to the value of the payload.
     """
 
-    def __init__(self):
+    def __init__(self, Machine):
         """
         Constructor for the SystemState class. It initializes the _observers list and sets the drives_are_ready
         and estop variables to False. It also subscribes to the estop and smartDrives/areReady topics on the mqtt
         broker.
         """
+        self.machine = Machine
         self._observers = []
         self.drives_are_ready = False
         self.estop = False
@@ -49,10 +47,14 @@ class SystemState:
         self.subscribe_to_drive_readiness()
         self.program_run = False
 
+    def publish_conv_state(self, id_conv, state):
+        print(f'conveyors/{id_conv}/state', state)
+        self.machine.publish_mqtt_event(f'conveyors/{id_conv}/state', state)
+
     def subscribe_to_estop(self):
         """ Subscribes to the estop/status topic on the mqtt broker. When a message is received on this topic,
         the estop_callback function is called."""
-        machine.on_mqtt_event('estop/status', self.estop_callback)
+        self.machine.on_mqtt_event('estop/status', self.estop_callback)
 
     def estop_callback(self, topic: str, payload: str):
         """ This function is called when a message is received on the estop/status topic.
@@ -67,7 +69,7 @@ class SystemState:
     def subscribe_to_drive_readiness(self):
         """ Subscribes to the smartDrives/areReady topic on the mqtt broker.
         When a message is received on this topic, the smart_drive_callback function is called."""
-        machine.on_mqtt_event('smartDrives/areReady', self.smart_drive_callback)
+        self.machine.on_mqtt_event('smartDrives/areReady', self.smart_drive_callback)
 
     def smart_drive_callback(self, topic: str, payload: str):
         """ This function is called when a message is received on the smartDrives/areReady topic.
@@ -86,8 +88,8 @@ class SystemState:
         self.program_run = False
 
     def subscribe_to_control_topics(self):
-        machine.on_mqtt_event('conveyors/control/start', self.on_start_command)
-        machine.on_mqtt_event('conveyors/control/stop', self.on_stop_command)
+        self.machine.on_mqtt_event('conveyors/control/start', self.on_start_command)
+        self.machine.on_mqtt_event('conveyors/control/stop', self.on_stop_command)
 
     def on_start_command(self, topic, payload):
         self.start_conveyors()
@@ -231,12 +233,12 @@ class Conveyor(ABC):
         """
         self.actuator_name = kwargs.get(CONVEYOR_NAME)
         try:
-            self.actuator = machine.get_ac_motor(self.actuator_name)
+            self.actuator = self.system_state.machine.get_ac_motor(self.actuator_name)
             self.actuator_is_vfd = True
         except MachineException:
             print(f'Actuator {self.actuator_name} not found as ac motor')
             try:
-                self.actuator = machine.get_actuator(self.actuator_name)
+                self.actuator = self.system_state.machine.get_actuator(self.actuator_name)
                 self.set_actuator_params(kwargs)
                 self.actuator_is_vfd = False
             except MachineException as e:
@@ -272,7 +274,7 @@ class Conveyor(ABC):
         sensor = kwargs.get(BOX_DETECTION_SENSOR_NAME)
         self.reverse_box_logic = kwargs.get(REVERSE_BOX_LOGIC).lower() == 'true'
         if sensor:
-            self.box_sensor = machine.get_input(sensor)
+            self.box_sensor = self.system_state.machine.get_input(sensor)
         else:
             self.box_sensor = None
 
@@ -304,7 +306,7 @@ class Conveyor(ABC):
         sensor = kwargs.get(ACCUMULATION_SENSOR_NAME)
         self.reverse_accumulation_logic = kwargs.get(REVERSE_ACCUMULATION_LOGIC).lower() == 'true'
         if sensor:
-            self.accumulation_sensor = machine.get_input(sensor)
+            self.accumulation_sensor = self.system_state.machine.get_input(sensor)
         else:
             self.accumulation_sensor = None
 
@@ -338,7 +340,7 @@ class Conveyor(ABC):
         self.pusher_present = pusher_params.get(PUSHER_PRESENT)
         if self.pusher_present == "True":
             self.pusher_present = True
-            self.pusher = machine.get_pneumatic(pusher_params.get(PUSHER_NAME))
+            self.pusher = self.system_state.machine.get_pneumatic(pusher_params.get(PUSHER_NAME))
             self.pusher_extend_logic = pusher_params.get(PUSHER_EXTEND_LOGIC)
             self.pusher_retract_logic = pusher_params.get(PUSHER_RETRACT_LOGIC)
             self.pusher_extend_delay = pusher_params.get(EXTEND_DELAY_SEC)
@@ -378,14 +380,14 @@ class Conveyor(ABC):
         self.stopper_present = self.stopper_config.get(STOPPER_PRESENT)
         if self.stopper_present == "True":
             self.stopper_present = True
-            self.stopper = machine.get_pneumatic(self.stopper_config.get(STOPPER_NAME))
+            self.stopper = self.system_state.machine.get_pneumatic(self.stopper_config.get(STOPPER_NAME))
             self.stopper_extend_logic = self.stopper_config.get(STOPPER_EXTEND_LOGIC)
             self.stopper_retract_logic = self.stopper_config.get(STOPPER_RETRACT_LOGIC)
             self.stopper_extend_delay = self.stopper_config.get(EXTEND_DELAY_SEC)
             self.stopper_retract_delay = self.stopper_config.get(RETRACT_DELAY_SEC)
             self.stopper_sensor_present = self.stopper_config.get(SENSORS_PRESENT)
             if self.stopper_sensor_present == "True":
-                self.stopper_sensor = machine.get_input(
+                self.stopper_sensor = self.system_state.machine.get_input(
                     self.stopper_config.get(STOPPER_SENSOR_NAME)
                 )
 
@@ -450,12 +452,14 @@ class SimpleInfeedConveyor(Conveyor):
 
     def run(self):
         if not self.system_state.drives_are_ready and self.system_state.estop:
+            self.system_state.publish_conv_state(1, 'stopped')
             self.conveyor_state = ConveyorState.INIT
             self.stop_conveyor()
         if self.parent_conveyor.conveyor_state == ConveyorState.RUNNING:
             self.move_conveyor()
             self.conveyor_state = ConveyorState.RUNNING
         if self.conveyor_state == ConveyorState.RUNNING:
+            self.system_state.publish_conv_state(1, 'running')
             if self.get_box_sensor_state() and not self.parent_conveyor.conveyor_state == ConveyorState.RUNNING:
                 self.stop()
                 self.conveyor_state = ConveyorState.STOPPING
@@ -464,6 +468,7 @@ class SimpleInfeedConveyor(Conveyor):
             self.conveyor_state = ConveyorState.INIT
 
     def stop(self):
+        self.system_state.publish_conv_state(1, 'stopped')
         self.conveyor_state = ConveyorState.INIT
         self.stop_conveyor()
 
@@ -477,6 +482,7 @@ class SimplePickConveyor(Conveyor):
 
     def run(self):
         if not self.system_state.drives_are_ready and self.system_state.estop:
+            self.system_state.publish_conv_state(2, 'stopped')
             self.conveyor_state = ConveyorState.INIT
             if self.pusher_present:
                 self.pusher.pull_async()
@@ -487,6 +493,8 @@ class SimplePickConveyor(Conveyor):
                 self.move_conveyor()
                 self.conveyor_state = ConveyorState.RUNNING
         elif self.conveyor_state == ConveyorState.RUNNING:
+            self.system_state.publish_conv_state(2, 'running')
+            print('running')
             self.move_conveyor()
             if self.get_box_sensor_state():
                 self.stop()
@@ -509,6 +517,7 @@ class SimplePickConveyor(Conveyor):
                 self.conveyor_state = ConveyorState.RUNNING
 
     def stop(self):
+        self.system_state.publish_conv_state(2, 'stopped')
         self.conveyor_state = ConveyorState.INIT
         self.stop_conveyor()
         if self.pusher_present:
@@ -516,16 +525,18 @@ class SimplePickConveyor(Conveyor):
 
 
 class SimpleConveyor(Conveyor):
-    def __init__(self, system_state: SystemState, **kwargs):
+    def __init__(self, system_state: SystemState, index, **kwargs):
         super().__init__(system_state, **kwargs)
         self.initialize_box_sensor(kwargs)
+        self.index = index
 
     def run(self):
+        self.system_state.publish_conv_state(self.index, 'running')
         if not self.system_state.drives_are_ready or self.system_state.estop:
             self.conveyor_state = ConveyorState.INIT
             self.stop_conveyor()
 
-        elif self.get_box_sensor_state():
+        if self.get_box_sensor_state():
             self.stop()
 
         else:
@@ -533,6 +544,7 @@ class SimpleConveyor(Conveyor):
             self.move_conveyor()
 
     def stop(self):
+        self.system_state.publish_conv_state(self.index, 'stopping')
         self.conveyor_state = ConveyorState.STOPPING
         self.stop_conveyor()
 

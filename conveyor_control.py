@@ -16,9 +16,14 @@ from conveyors import (SystemState, ControlAllConveyor, SimpleInfeedConveyor, Si
                        SimpleConveyor, InfeedConveyor, AccumulatingConveyor, DoublePickInfeedConveyor)
 
 from helpers import InterThreadBool
-from conveyor_configuration import get_conveyor_config, configure_conveyors
+from conveyor_configuration import get_conveyor_config, configure_conveyors, fake_box
 
-system = SystemState()
+from machinelogic import Machine
+
+# machine = Machine('http://192.168.7.2:3100', 'ws://192.168.7.2:9001')
+machine = Machine()
+
+system = SystemState(machine)
 
 time.sleep(2)
 
@@ -41,7 +46,7 @@ program_run = InterThreadBool()
 END_PROGRAM = False
 CONVEYORS_ARE_RUNNING = False
 prev_time = time.perf_counter()
-
+fake_box(system)
 program_run.set(True)
 try:
     system.subscribe_to_control_topics()
@@ -50,27 +55,21 @@ try:
 
     while not END_PROGRAM:
 
-        if system.drives_are_ready and not system.estop and not robot_is_picking.get() and not END_PROGRAM:
+        if system.program_run:
+            print("Program is running")
             program_run.set(True)
             conveyors_list.run_all()
             CONVEYORS_ARE_RUNNING = True
-        else:
+        if not system.program_run:
+            print("Program is not running")
             program_run.set(False)
             conveyors_list.stop_all()
-
-        if system.estop:
-            print("Estop is active")
-            conveyors_list.stop_all()
-            program_run.set(False)
-
-        if robot_is_picking.get():
-            print("Robot is picking")
-            program_run.set(False)
-
-        if END_PROGRAM:
-            program_run.set(False)
 
         time.sleep(0.1)
+        sleep_time = 0.100 - (time.perf_counter() - prev_time)
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+        prev_time = time.perf_counter()
     # while True:
     #
     #     try:
@@ -88,10 +87,7 @@ try:
     #         conveyors_list.stop_all()
     #         print(e)
     #
-    #     sleep_time = 0.100 - (time.perf_counter() - prev_time)
-    #     if sleep_time > 0:
-    #         time.sleep(sleep_time)
-    #     prev_time = time.perf_counter()
+    #
 
 except KeyboardInterrupt:
     conveyors_list.stop_all()
