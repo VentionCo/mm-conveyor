@@ -50,25 +50,26 @@ try:
 
     while not END_PROGRAM:
 
-        if system.drives_are_ready and not system.estop and not robot_is_picking.get() and not END_PROGRAM:
+        if  system.program_run:
+            print("Running")
             program_run.set(True)
             conveyors_list.run_all()
             CONVEYORS_ARE_RUNNING = True
-        else:
+        if not system.program_run:
+            print("Not running")
             program_run.set(False)
+            CONVEYORS_ARE_RUNNING = False
             conveyors_list.stop_all()
 
-        if system.estop:
-            print("Estop is active")
-            conveyors_list.stop_all()
-            program_run.set(False)
+        # if system.estop:
+        #     print("Estop is active")
+        #     conveyors_list.stop_all()
+        #     program_run.set(False)
 
-        if robot_is_picking.get():
-            print("Robot is picking")
-            program_run.set(False)
+        # if robot_is_picking.get():
+        #     print("Robot is picking")
+        #     program_run.set(False)
 
-        if END_PROGRAM:
-            program_run.set(False)
 
         time.sleep(0.1)
     # while True:
