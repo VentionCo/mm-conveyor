@@ -106,7 +106,8 @@ class Timer():
         else: 
             return False
 
-class Pulse():
+
+class Pulse:
 
     def __init__(self, period : float = 1.0):
         """
@@ -139,6 +140,7 @@ class Pulse():
             self.__timer.start()
 
         return self.__status
+
 
 if __name__ == "__main__":
     #Code used to debug and test the library
