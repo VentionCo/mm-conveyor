@@ -1,28 +1,36 @@
 {
     "ListOfAllConveyors": {
         "Conveyor_1": {
-            "Type": "SimpleConveyor",
-            "EnableConveyor": "True",
-            "conveyorName": "Infeed",
-            "AxisParameters": {
-                "speed": 200,
-                "acceleration": 200,
-                "deceleration": 200
-            },
-            "boxDetectionSensorName": "Infeed",
-            "boxSensorReverseLogic": "False"
+          "Type": "SimpleConveyor",
+          "EnableConveyor": "True",
+          "conveyorName": "Infeed",
+          "axisParameters": {
+            "MotorType": "DC",
+            "speed": 200,
+            "acceleration": 200,
+            "deceleration": 200
+          },
+          "boxSensorConfig":{
+            "boxSensorPresent": true,
+            "boxSensorName": "Infeed",
+            "boxSensorReverseLogic": false
+          }
         },
         "Conveyor_2": {
            "Type": "PickConveyor",
            "EnableConveyor": "True",
            "conveyorName": "Pick",
            "AxisParameters": {
-               "speed": 200,
-               "acceleration": 200,
-               "deceleration": 200
+             "motorType": "AC",
+             "speed": 200,
+             "acceleration": 200,
+             "deceleration": 200
            },
-           "boxDetectionSensorName": "Pick",
-           "boxSensorReverseLogic": "False",
+           "boxSensorConfig":{
+             "boxSensorPresent": true,
+             "boxSensorName": "Pick",
+             "boxSensorReverseLogic": false
+           },
            "pusherConfig": {
                "pusherPresent": "True",
                "pusherName": "PushPick",
@@ -40,22 +48,54 @@
             "EnableConveyor": "True",
             "conveyorName": "follower",
             "AxisParameters": {
-                "speed": 200,
-                "acceleration": 200,
-                "deceleration": 200
+              "motorType": "DC",
+              "speed": 200,
+              "acceleration": 200,
+              "deceleration": 200
             }
         },
         "Conveyor_4": {
-              "Type": "QueueingConveyor",
-              "EnableConveyor": "True",
-              "conveyorName": "queueing",
-              "AxisParameters": {
-                  "speed": 600,
-                  "acceleration": 600,
-                  "deceleration": 600
-              },
-              "boxDetectionSensorName": "queueing",
-              "boxSensorReverseLogic": "False"
+          "Type": "QueueingConveyor",
+          "EnableConveyor": "True",
+          "conveyorName": "queueing",
+          "AxisParameters": {
+            "motorType": "AC",
+            "speed": 600,
+            "acceleration": 600,
+            "deceleration": 600
+          },
+          "boxSensorConfig":{
+            "boxSensorPresent": true,
+            "boxSensorName": "queueing",
+            "boxSensorReverseLogic": false
           }
+        },
+        "Conveyor_5": {
+          "Type": "TransferConveyor",
+          "EnableConveyor": "True",
+          "conveyorName": "transferConv",
+          "AxisParameters": {
+            "motorType": "DC",
+            "speed": 75,
+            "acceleration": 76,
+            "deceleration": 200
+          },
+          "boxSensorConfig":{
+            "boxSensorPresent": true,
+            "boxSensorName": "Transfer",
+            "boxSensorReverseLogic": false
+          },
+          "pusherConfig": {
+            "pusherName": "transferPusher",
+            "pusherPresent": "True",
+            "sensorsPresent": "False",
+            "pusherReverseIOLogic": "False",
+            "retractReverseIOLogic": "False",
+            "pusherExtendLogic": "Time_Based",
+            "pusherRetractLogic": "Time_Based",
+            "retractDelay_sec": 0,
+            "extendDelay_sec": 1
+          }
+        }
     }
 }

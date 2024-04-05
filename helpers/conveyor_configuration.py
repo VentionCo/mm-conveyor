@@ -1,11 +1,12 @@
 from conveyors import (SimpleInfeedConveyor, SimplePickConveyor,
                         InfeedConveyor, AccumulatingConveyor, DoublePickInfeedConveyor,
-                       QueueingConveyor, SystemState)
+                       SystemState)
 from conveyor_types.conveyor_definitions import *
 from conveyor_types.simple import SimpleConveyor, SimpleFSMConveyor
 from conveyor_types.pick import PickFSMConveyor
 from conveyor_types.follower import FollowerFSMConveyor
 from conveyor_types.queueing import QueueingFSMConveyor
+from conveyor_types.transfer import TransferFSMConveyor
 import json
 import os
 
@@ -42,6 +43,12 @@ def configure_conveyors(configuration_data, system, robot_is_picking):
             pick_conveyor = PickFSMConveyor(system, robot_is_picking, index, **conveyor_config)
             parent = pick_conveyor
             conveyors.append(pick_conveyor)
+        elif conveyor_type == "TransferConveyor":
+            if parent is None:
+                raise ValueError("Parent conveyor not defined for transfer conveyor.")
+            else:
+                transfer_conveyor = TransferFSMConveyor(system, parent, **conveyor_config)
+                conveyors.append(transfer_conveyor)
         # elif conveyor_type == "AccumulatingConveyor":
         #     accumulating_conveyor = AccumulatingConveyor(system, robot_is_picking, **conveyor_config)
         #     conveyors.append(accumulating_conveyor)

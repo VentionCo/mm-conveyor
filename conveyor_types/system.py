@@ -1,3 +1,5 @@
+from conveyor_types.ipc_mqtt_definitions import mqtt_messages, mqtt_topics, format_message
+
 
 class SystemState:
     """
@@ -33,38 +35,45 @@ class SystemState:
         self.estop = False
         self.subscribe_to_estop()
         self.subscribe_to_drive_readiness()
+        self.machine.on_mqtt_event(mqtt_topics['conveyorControlStart'], self.on_start_command)
+        self.machine.on_mqtt_event(mqtt_topics['conveyorControlStop'], self.on_stop_command)
         self.program_run = False
 
     def publish_conv_state(self, id_conv, state):
-        print(f'conveyors/{id_conv}/state', state)
-        self.machine.publish_mqtt_event(f'conveyors/{id_conv}/state', state)
+        """ Publishes the state of the conveyor with the given id to the mqtt broker."""
+        topic = format_message(mqtt_topics['conveyor/state'], id_conv=id_conv)
+        print(topic, state)
+        self.machine.publish_mqtt_event(topic, state)
 
     def subscribe_to_estop(self):
         """ Subscribes to the estop/status topic on the mqtt broker. When a message is received on this topic,
         the estop_callback function is called."""
-        self.machine.on_mqtt_event('estop/status', self.estop_callback)
+        self.machine.on_mqtt_event(mqtt_topics['estop/status'], self.estop_callback)
 
     def estop_callback(self, topic: str, payload: str):
         """ This function is called when a message is received on the estop/status topic.
         It sets the estop variable to the value of the payload."""
-        if payload.lower() == "true":
+        if payload.lower() == mqtt_messages['estopTrigger']:
             self.estop = True
-        elif payload.lower() == "false":
+        elif payload.lower() == mqtt_messages['estopUnTrigger']:
             self.estop = False
         else:
             print(f"Unexpected payload received in estopCallback: {payload}")
 
     def subscribe_to_drive_readiness(self):
-        """ Subscribes to the smartDrives/areReady topic on the mqtt broker.
-        When a message is received on this topic, the smart_drive_callback function is called."""
-        self.machine.on_mqtt_event('smartDrives/areReady', self.smart_drive_callback)
+        """
+        Subscribes to the smartDrives/areReady topic on the mqtt broker.
+        When a message is received on this topic, the smart_drive_callback function
+        is called.
+        """
+        self.machine.on_mqtt_event(mqtt_topics['smartDrivesReady'], self.smart_drive_callback)
 
     def smart_drive_callback(self, topic: str, payload: str):
         """ This function is called when a message is received on the smartDrives/areReady topic.
          It sets the drives_are_ready variable to the value of the payload."""
-        if payload.lower() == "true":
+        if payload.lower() == mqtt_messages['smartDrivesReady']:
             self.drives_are_ready = True
-        elif payload.lower() == "false":
+        elif payload.lower() == mqtt_messages['smartDrivesNotReady']:
             self.drives_are_ready = False
         else:
             print(f"Unexpected payload received in smartDriveCallback: {payload}")
@@ -74,10 +83,6 @@ class SystemState:
 
     def stop_conveyors(self):
         self.program_run = False
-
-    def subscribe_to_control_topics(self):
-        self.machine.on_mqtt_event('conveyors/control/start', self.on_start_command)
-        self.machine.on_mqtt_event('conveyors/control/stop', self.on_stop_command)
 
     def on_start_command(self, topic, payload):
         self.start_conveyors()

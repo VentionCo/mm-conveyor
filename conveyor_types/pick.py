@@ -4,6 +4,7 @@ from transitions import Machine as MachineTransitions
 from helpers.thread_helpers import InterThreadBool
 from helpers.timer_helper import Timer
 from transitions.extensions import GraphMachine as MachineTransitions
+from conveyor_types.ipc_mqtt_definitions import mqtt_messages, mqtt_topics, format_message
 
 
 class InfeedConveyor(Conveyor):
@@ -101,20 +102,20 @@ class PickFSMConveyor(Conveyor):
                                     before='before_resume_after_pick', after='after_resume_after_pick')
 
         self.system_state.machine.on_mqtt_event(self.sensor_topic, self.mqtt_event_handler)
-        self.system_state.machine.on_mqtt_event('robot/picking', self.robot_picking_handler)
+        self.system_state.machine.on_mqtt_event(mqtt_topics['robotPick'], self.mqtt_event_handler)
 
-        self.machine.get_graph().draw('./conveyor_types/state_images/infeed_conveyor_state_diagram.png', prog='dot')
-        print(f"state: {self.state}")
-
-    def robot_picking_handler(self, topic, message):
-        if message == 'GO':  # Replace with your actual message content
-            self.resume_after_pick()
+        self.machine.get_graph().draw('./conveyor_types/state_images/pick_conveyor_state_diagram.png', prog='dot')
 
     def mqtt_event_handler(self, topic, message):
-        print("MQTT Event: ", message)
-        # Directly trigger state transitions without manual action calls
-        if message == 'STOP':
-            self.stop()
+        print("Topic: ", topic, " MQTT Event: ", message)
+        if topic == self.sensor_topic:
+            if message == mqtt_messages['sensorTrigger']:
+                self.start()
+            if message == mqtt_messages['sensorUnTrigger']:
+                self.stop()
+        if topic == mqtt_topics['robotPick']:
+            if message == mqtt_messages['robotPicking']:
+                self.resume_after_pick()
 
     def before_resume_after_pick(self):
         print("Preparing to resume after pick.")
@@ -132,12 +133,12 @@ class PickFSMConveyor(Conveyor):
 
     def after_start(self):
         self.move_conveyor()
-        self.system_state.machine.publish_conv_state(self.index, 'running')
+        self.system_state.machine.publish_conv_state(self.index, mqtt_messages['parentRunning'])
         print("Conveyor started.")
 
     def before_stop(self):
         print("Preparing to stop conveyor.")
-        self.system_state.machine.publish_conv_state(self.index, 'stopped')
+        self.system_state.machine.publish_conv_state(self.index, mqtt_messages['parentStopped'])
         self.stop_conveyor()
 
     def after_stop(self):

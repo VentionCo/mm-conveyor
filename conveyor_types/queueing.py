@@ -2,8 +2,7 @@ from conveyor_types.base import Conveyor, ConveyorState
 from conveyor_types.system import SystemState
 from transitions import Machine as MachineTransitions
 from transitions.extensions import GraphMachine as MachineTransitions
-import time
-import threading
+from conveyor_types.ipc_mqtt_definitions import mqtt_messages, mqtt_topics, format_message
 
 
 class QueueingConveyor(Conveyor):
@@ -30,8 +29,7 @@ class QueueingFSMConveyor(Conveyor):
     def __init__(self, system_state: SystemState, parentConveyor: Conveyor, **kwargs):
         super().__init__(system_state, **kwargs)
         self.parentConveyor = parentConveyor
-
-        self.parent_topic = f'conveyors/{self.parentConveyor.index}/state'
+        self.parent_topic = format_message(mqtt_topics['conveyor/state'], id_conv=parentConveyor.index)
 
         self.states = ['running', 'stopped']
         self.machine = MachineTransitions(model=self, states=self.states, initial='stopped')
@@ -41,18 +39,15 @@ class QueueingFSMConveyor(Conveyor):
                                     after='after_stop')
         self.initialize_box_sensor(kwargs)
         self.system_state.machine.on_mqtt_event(self.sensor_topic, self.mqtt_event_handler)
-        self.system_state.machine.on_mqtt_event(self.parent_topic, self.parent_state_handler)
-        # self.system_state.machine.on_mqtt_event(self.parent_topic, self.mqtt_event_handler)
+        self.system_state.machine.on_mqtt_event(self.parent_topic, self.mqtt_event_handler)
         self.machine.get_graph().draw('./conveyor_types/state_images/queueing_conveyor_state_diagram.png', prog='dot')
 
-    def parent_state_handler(self, topic, message):
-        if message == 'running':
-            self.start()
-
     def mqtt_event_handler(self, topic, message):
-        if message == 'START':
+        if message == mqtt_messages['parentRunning']:
             self.start()
-        elif message == 'STOP':
+        if message == mqtt_messages['sensorTrigger']:
+            self.start()
+        elif message == mqtt_messages['sensorUnTrigger']:
             if self.parentConveyor.state != 'running':
                 self.stop()
             else:

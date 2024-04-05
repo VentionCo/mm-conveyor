@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from machinelogic import MachineException
 from conveyor_types.system import SystemState
 from conveyor_types.conveyor_definitions import *
+from conveyor_types.ipc_mqtt_definitions import mqtt_topics, format_message
 from enum import Enum
 
 
@@ -78,6 +79,7 @@ class Conveyor(ABC):
         """ Constructor for the Conveyor class. It initializes the system_state
         and sets the conveyor_state to INIT.
         It also calls the initialize_actuator method."""
+        self.accumulation_topic = None
         self.index = None
         self.sensor_topic = None
         self.pull_sensor = None
@@ -180,11 +182,13 @@ class Conveyor(ABC):
         box logic is set to True in the dictionary and False if it
         is not set to True in the dictionary.
         """
-        sensor = kwargs.get(BOX_DETECTION_SENSOR_NAME)
-        self.reverse_box_logic = kwargs.get(REVERSE_BOX_LOGIC).lower() == 'true'
-        if sensor:
-            self.box_sensor = self.system_state.machine.get_input(sensor)
-            self.sensor_topic = f'io-expander/devices/{self.box_sensor.configuration.device}/inputs/{self.box_sensor.configuration.port}'
+        sensor_config = kwargs.get(BOX_DETECTION_SENSOR_CONFIG, {})
+        self.reverse_box_logic = sensor_config.get(REVERSE_BOX_LOGIC) == 'true'
+        if sensor_config.get(BOX_SENSOR_PRESENT):
+            self.box_sensor = self.system_state.machine.get_input(sensor_config.get(BOX_SENSOR_NAME))
+            self.sensor_topic = format_message(mqtt_topics['sensor'],
+                                               device=self.box_sensor.configuration.device,
+                                               port=self.box_sensor.configuration.port)
         else:
             self.box_sensor = None
 
@@ -217,6 +221,9 @@ class Conveyor(ABC):
         self.reverse_accumulation_logic = kwargs.get(REVERSE_ACCUMULATION_LOGIC).lower() == 'true'
         if sensor:
             self.accumulation_sensor = self.system_state.machine.get_input(sensor)
+            self.accumulation_topic = format_message(mqtt_topics['sensor'],
+                                                     device=self.accumulation_sensor.configuration.device,
+                                                     port=self.accumulation_sensor.configuration.port)
         else:
             self.accumulation_sensor = None
 
