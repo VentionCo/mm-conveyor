@@ -1,1 +1,3 @@
 machine-code-python-sdk
+transitions
+graphviz
