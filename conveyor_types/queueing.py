@@ -2,7 +2,7 @@ from conveyor_types.base import Conveyor, ConveyorState
 from conveyor_types.system import SystemState
 from transitions import Machine as MachineTransitions
 from transitions.extensions import GraphMachine as MachineTransitions
-from conveyor_types.ipc_mqtt_definitions import mqtt_messages, mqtt_topics, format_message
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages, mqtt_topics, format_message
 
 
 class QueueingConveyor(Conveyor):
@@ -26,9 +26,10 @@ class QueueingConveyor(Conveyor):
 
 
 class QueueingFSMConveyor(Conveyor):
-    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, **kwargs):
+    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, index, **kwargs):
         super().__init__(system_state, **kwargs)
         self.parentConveyor = parentConveyor
+        self.index = index
         self.parent_topic = format_message(mqtt_topics['conveyor/state'], id_conv=parentConveyor.index)
 
         self.states = ['running', 'stopped']

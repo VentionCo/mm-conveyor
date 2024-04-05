@@ -27,7 +27,7 @@ class FollowerConveyor(Conveyor):
 
 
 class FollowerFSMConveyor(Conveyor):
-    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, **kwargs):
+    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, index, **kwargs):
         super().__init__(system_state, **kwargs)
         self.parentConveyor = parentConveyor
         self.states = ['running', 'stopped']

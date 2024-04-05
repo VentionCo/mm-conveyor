@@ -42,7 +42,6 @@ class SimpleFSMConveyor(Conveyor):
                                     after='after_start')
         self.machine.add_transition(trigger='stop', source='running', dest='stopped', before='before_stop',
                                     after='after_stop')
-        # self.setup_mqtt_box_detection_listener(self.sensor_topic, self.mqtt_event_handler)
         self.system_state.machine.on_mqtt_event(self.sensor_topic, self.mqtt_event_handler)
         self.machine.get_graph().draw('./conveyor_types/state_images/simple_conveyor_state_diagram.png', prog='dot')
 

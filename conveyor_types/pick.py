@@ -4,7 +4,7 @@ from transitions import Machine as MachineTransitions
 from helpers.thread_helpers import InterThreadBool
 from helpers.timer_helper import Timer
 from transitions.extensions import GraphMachine as MachineTransitions
-from conveyor_types.ipc_mqtt_definitions import mqtt_messages, mqtt_topics, format_message
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages, mqtt_topics
 
 
 class InfeedConveyor(Conveyor):

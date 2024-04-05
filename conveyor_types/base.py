@@ -1,8 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from machinelogic import MachineException
 from conveyor_types.system import SystemState
-from conveyor_types.conveyor_definitions import *
-from conveyor_types.ipc_mqtt_definitions import mqtt_topics, format_message
+from conveyor_types.definitions.conveyor_definitions import *
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_topics, format_message
 from enum import Enum
 
 
@@ -79,6 +79,8 @@ class Conveyor(ABC):
         """ Constructor for the Conveyor class. It initializes the system_state
         and sets the conveyor_state to INIT.
         It also calls the initialize_actuator method."""
+        self.restart_time = None
+        self.accumulation_time = None
         self.accumulation_topic = None
         self.index = None
         self.sensor_topic = None
@@ -217,10 +219,13 @@ class Conveyor(ABC):
         to True if the reverse accumulation logic is set to True in the dictionary
         and False if it is not set to True in the dictionary.
         """
-        sensor = kwargs.get(ACCUMULATION_SENSOR_NAME)
+        # sensor = kwargs.get(ACCUMULATION_SENSOR_NAME)
+        sensor_config = kwargs.get(ACCUMULATION_SENSOR_CONFIG, {})
         self.reverse_accumulation_logic = kwargs.get(REVERSE_ACCUMULATION_LOGIC).lower() == 'true'
-        if sensor:
-            self.accumulation_sensor = self.system_state.machine.get_input(sensor)
+        if sensor_config.get(SENSOR_PRESENT):
+            self.accumulation_sensor = self.system_state.machine.get_input(sensor_config.get(ACCUMULATION_SENSOR_NAME))
+            self.accumulation_time = sensor_config.get(ACCUMULATION_TIME)
+            self.restart_time = sensor_config.get(RESTART_TIME)
             self.accumulation_topic = format_message(mqtt_topics['sensor'],
                                                      device=self.accumulation_sensor.configuration.device,
                                                      port=self.accumulation_sensor.configuration.port)

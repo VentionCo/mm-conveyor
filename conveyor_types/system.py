@@ -1,4 +1,4 @@
-from conveyor_types.ipc_mqtt_definitions import mqtt_messages, mqtt_topics, format_message
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages, mqtt_topics, format_message
 
 
 class SystemState:
