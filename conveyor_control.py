@@ -12,10 +12,10 @@ stops the conveyors if it is set to False.
 
 import time
 
-from conveyors import (SystemState, ControlAllConveyor, SimpleInfeedConveyor, SimplePickConveyor,
-                       SimpleConveyor, InfeedConveyor, AccumulatingConveyor, DoublePickInfeedConveyor)
+from conveyor_types.system import SystemState
+from conveyor_types.conveyors import ControlAllConveyor
 
-from helpers import InterThreadBool
+from helpers.thread_helpers import InterThreadBool
 from conveyor_configuration import get_conveyor_config, configure_conveyors, fake_box
 
 from machinelogic import Machine

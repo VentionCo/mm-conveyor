@@ -1,7 +1,13 @@
-from conveyors import (SimpleInfeedConveyor, SimplePickConveyor,
-                       SimpleConveyor, InfeedConveyor, AccumulatingConveyor, DoublePickInfeedConveyor,
-                       FollowerConveyor, QueueingConveyor, SystemState)
-from conveyor_definitions import *
+
+from conveyor_types.system import SystemState
+from conveyor_types.simple import SimpleConveyor
+from conveyor_types.infeed import InfeedConveyor
+from conveyor_types.accumulating import AccumulatingConveyor
+from conveyor_types.double_pick_infeed import DoublePickInfeedConveyor
+from conveyor_types.follower import FollowerConveyor
+from conveyor_types.queueing import QueueingConveyor
+
+from conveyor_types.definitions.conveyor_definitions import *
 import json
 import os
 
@@ -25,18 +31,12 @@ def configure_conveyors(configuration_data, system, robot_is_picking):
 
         conveyor_type = conveyor_config[TYPE]
 
-        if conveyor_type == "SimplePickConveyor":
-            pick_infeed = SimplePickConveyor(system, **conveyor_config)
-            conveyors.append(pick_infeed)
-            parent = pick_infeed
-        elif conveyor_type == "SimpleInfeedConveyor":
-            infeed_conveyor = SimpleInfeedConveyor(system, parent, **conveyor_config)
-            conveyors.append(infeed_conveyor)
-        elif conveyor_type == "SimpleConveyor":
+        if conveyor_type == "SimpleConveyor":
             simple_conveyor = SimpleConveyor(system, index, **conveyor_config)
             conveyors.append(simple_conveyor)
         elif conveyor_type == "InfeedConveyor":
             infeed_conveyor = InfeedConveyor(system, robot_is_picking, **conveyor_config)
+            parent = infeed_conveyor
             conveyors.append(infeed_conveyor)
         elif conveyor_type == "AccumulatingConveyor":
             accumulating_conveyor = AccumulatingConveyor(system, robot_is_picking, **conveyor_config)
