@@ -14,14 +14,60 @@ import time
 
 from conveyor_types.system import SystemState
 from conveyor_types.conveyors import ControlAllConveyor
-
 from helpers.thread_helpers import InterThreadBool
 from conveyor_configuration import get_conveyor_config, configure_conveyors, fake_box
-
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages
 from machinelogic import Machine
 
 # machine = Machine('http://192.168.7.2:3100', 'ws://192.168.7.2:9001')
 machine = Machine()
+
+
+def stop_conveyors():
+    """Stop all conveyors gracefully."""
+    global conveyors_list, program_run, CONVEYORS_ARE_RUNNING
+    print("Stopping all conveyors...")
+    program_run.set(False)
+    conveyors_list.stop_all()
+    CONVEYORS_ARE_RUNNING = False
+    print("All conveyors stopped.")
+
+
+def start_conveyors():
+    """Start all conveyors with the current configuration."""
+    global conveyors_list, program_run, CONVEYORS_ARE_RUNNING
+    print("Starting all conveyors...")
+    program_run.set(True)
+    conveyors_list.run_all()
+    CONVEYORS_ARE_RUNNING = True
+    print("All conveyors running.")
+
+
+def reconfigure_conveyors():
+    global conveyors, conveyors_list
+    print("Reconfiguring conveyors...")
+
+    # Stop the conveyors before reconfiguring
+    stop_conveyors()
+
+    # Reconfigure conveyors
+    configuration_data = get_conveyor_config()
+    conveyors = configure_conveyors(configuration_data, system, robot_is_picking)
+    conveyors_list = ControlAllConveyor(conveyors)
+
+    # Start the conveyors with the new configuration
+    start_conveyors()
+
+    print("Conveyors reconfigured successfully.")
+
+
+def on_restart_command(topic: str, payload: str):
+    """This function is called when a message is received on the restart topic."""
+    if payload.lower() == mqtt_messages['restart']:
+        reconfigure_conveyors()
+
+
+machine.on_mqtt_event('restart', on_restart_command)
 
 system = SystemState(machine)
 
@@ -70,24 +116,6 @@ try:
         if sleep_time > 0:
             time.sleep(sleep_time)
         prev_time = time.perf_counter()
-    # while True:
-    #
-    #     try:
-    #         if program_run.get() and system.drives_are_ready:
-    #             conveyors_list.run_all()
-    #             CONVEYORS_ARE_RUNNING = True
-    #         elif not system.drives_are_ready or system.estop:
-    #             conveyors_list.stop_all()
-    #             CONVEYORS_ARE_RUNNING = False
-    #             program_run.set(False)
-    #         else:
-    #             program_run.set(True)
-    #
-    #     except Exception as e:
-    #         conveyors_list.stop_all()
-    #         print(e)
-    #
-    #
 
 except KeyboardInterrupt:
     conveyors_list.stop_all()

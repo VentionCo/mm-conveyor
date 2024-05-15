@@ -7,6 +7,7 @@ mqtt_topics = {
     'conveyorControlStop': 'conveyors/control/stop',
     'sensor': 'io-expander/devices/{device}/inputs/{port}',
     'robotPick': 'robot/picking',
+    'restart': 'process/restart',
 }
 
 mqtt_messages = {
@@ -19,6 +20,7 @@ mqtt_messages = {
     'robotPicking': 'true',
     'parentRunning': 'running',
     'parentStopped': 'stopped',
+    'restart': 'true',
 }
 
 
