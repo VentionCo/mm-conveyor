@@ -35,20 +35,20 @@ def configure_conveyors(configuration_data, system, robot_is_picking):
             simple_conveyor = SimpleConveyor(system, index, **conveyor_config)
             conveyors.append(simple_conveyor)
         elif conveyor_type == "InfeedConveyor":
-            infeed_conveyor = InfeedConveyor(system, robot_is_picking, **conveyor_config)
+            infeed_conveyor = InfeedConveyor(system, robot_is_picking, index, **conveyor_config)
             parent = infeed_conveyor
             conveyors.append(infeed_conveyor)
         elif conveyor_type == "AccumulatingConveyor":
-            accumulating_conveyor = AccumulatingConveyor(system, robot_is_picking, **conveyor_config)
+            accumulating_conveyor = AccumulatingConveyor(system, robot_is_picking, index, **conveyor_config)
             conveyors.append(accumulating_conveyor)
         elif conveyor_type == "DoublePickInfeedConveyor":
-            double_pick_infeed_conveyor = DoublePickInfeedConveyor(system, **conveyor_config)
+            double_pick_infeed_conveyor = DoublePickInfeedConveyor(system, index, **conveyor_config)
             conveyors.append(double_pick_infeed_conveyor)
         elif conveyor_type == "FollowerConveyor":
-            follower_conveyor = FollowerConveyor(system, parent, **conveyor_config)
+            follower_conveyor = FollowerConveyor(system, parent, index, **conveyor_config)
             conveyors.append(follower_conveyor)
         elif conveyor_type == "QueueingConveyor":
-            queueing_conveyor = QueueingConveyor(system, parent, **conveyor_config)
+            queueing_conveyor = QueueingConveyor(system, parent, index, **conveyor_config)
             conveyors.append(queueing_conveyor)
         index = index + 1
     return conveyors

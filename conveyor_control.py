@@ -16,7 +16,7 @@ from conveyor_types.system import SystemState
 from conveyor_types.conveyors import ControlAllConveyor
 from helpers.thread_helpers import InterThreadBool
 from conveyor_configuration import get_conveyor_config, configure_conveyors, fake_box
-from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages, mqtt_topics
 from machinelogic import Machine
 
 # machine = Machine('http://192.168.7.2:3100', 'ws://192.168.7.2:9001')
@@ -62,12 +62,14 @@ def reconfigure_conveyors():
 
 
 def on_restart_command(topic: str, payload: str):
+    print(topic, payload)
     """This function is called when a message is received on the restart topic."""
     if payload.lower() == mqtt_messages['restart']:
+        print("Restarting conveyors...")
         reconfigure_conveyors()
 
 
-machine.on_mqtt_event('restart', on_restart_command)
+machine.on_mqtt_event(mqtt_topics['restart'], on_restart_command)
 
 system = SystemState(machine)
 

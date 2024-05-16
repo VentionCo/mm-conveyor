@@ -6,8 +6,8 @@ from helpers.timer_helper import Timer
 
 
 class InfeedConveyor(Conveyor):
-    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool = InterThreadBool(), **kwargs):
-        super().__init__(system_state, **kwargs)
+    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool, index, **kwargs):
+        super().__init__(system_state, index, **kwargs)
 
         self.initialize_box_sensor(kwargs)
         self.initialize_pusher(kwargs)

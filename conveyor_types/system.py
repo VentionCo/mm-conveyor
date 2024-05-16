@@ -1,5 +1,4 @@
 from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages, mqtt_topics, format_message
-from conveyor_configuration import get_conveyor_config, configure_conveyors
 from helpers.thread_helpers import InterThreadBool
 from conveyor_types.conveyors import ControlAllConveyor
 
@@ -41,13 +40,9 @@ class SystemState:
         self.machine.on_mqtt_event(mqtt_topics['conveyorControlStop'], self.on_stop_command)
         self.program_run = False
 
-
-
-
     def publish_conv_state(self, id_conv, state):
         """ Publishes the state of the conveyor with the given id to the mqtt broker."""
         topic = format_message(mqtt_topics['conveyor/state'], id_conv=id_conv)
-        print(topic, state)
         self.machine.publish_mqtt_event(topic, state)
 
     def subscribe_to_estop(self):
@@ -66,8 +61,8 @@ class SystemState:
             print(f"Unexpected payload received in estopCallback: {payload}")
 
     def subscribe_to_control_topics(self):
-        self.machine.on_mqtt_event('conveyors/control/start', self.on_start_command)
-        self.machine.on_mqtt_event('conveyors/control/stop', self.on_stop_command)
+        self.machine.on_mqtt_event(mqtt_topics['conveyorControlStart'], self.on_start_command)
+        self.machine.on_mqtt_event(mqtt_topics['conveyorControlStop'], self.on_stop_command)
 
     def subscribe_to_drive_readiness(self):
         """
@@ -94,7 +89,9 @@ class SystemState:
         self.program_run = False
 
     def on_start_command(self, topic, payload):
+        print('start command received')
         self.start_conveyors()
 
     def on_stop_command(self, topic, payload):
+        print('stop command received')
         self.stop_conveyors()

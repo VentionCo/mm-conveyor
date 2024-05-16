@@ -4,8 +4,8 @@ from conveyor_types.system import SystemState
 
 
 class QueueingConveyor(Conveyor):
-    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, **kwargs):
-        super().__init__(system_state, **kwargs)
+    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, index, **kwargs):
+        super().__init__(system_state, index, **kwargs)
         self.initialize_box_sensor(kwargs)
         self.parentConveyor = parentConveyor
         self.conveyor_state = parentConveyor.conveyor_state

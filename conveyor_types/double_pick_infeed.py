@@ -3,13 +3,13 @@ from conveyor_types.base import Conveyor, ConveyorState
 from conveyor_types.system import SystemState
 from helpers.thread_helpers import InterThreadBool
 from helpers.timer_helper import Timer
-from definitions.conveyor_definitions import RESTART_TIME, STARTUP_TIME, SUSTAIN_TIME, PACING_TIME
+from conveyor_types.definitions.conveyor_definitions import RESTART_TIME, STARTUP_TIME, SUSTAIN_TIME, PACING_TIME
 
 
 class DoublePickInfeedConveyor(Conveyor):
 
-    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool = InterThreadBool(), **kwargs):
-        super().__init__(system_state, **kwargs)
+    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool, index, **kwargs):
+        super().__init__(system_state, index, **kwargs)
         self.pacingTimer = None
         self.sustainTimer = None
         self.startup_timer = None

@@ -2,7 +2,7 @@ from abc import ABC
 from machinelogic import MachineException
 from conveyor_types.system import SystemState
 from conveyor_types.definitions.conveyor_definitions import *
-from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_topics, format_message
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_topics, mqtt_messages, format_message
 from enum import Enum
 
 
@@ -75,14 +75,16 @@ class Conveyor(ABC):
         get_status: A method that is used to get the status of the conveyor.
     """
 
-    def __init__(self, system_state: SystemState, **kwargs):
+    def __init__(self, system_state: SystemState, index,  **kwargs):
         """ Constructor for the Conveyor class. It initializes the system_state
         and sets the conveyor_state to INIT.
         It also calls the initialize_actuator method."""
+        self.sensor_topic = None
         self.pull_sensor = None
         self.push_sensor = None
         self.actuator = None
         self.actuator_name = None
+        self.index = index
         self.system_state = system_state
         self.conveyor_state = ConveyorState.INIT
         self.actuator_speed = 0
@@ -111,20 +113,6 @@ class Conveyor(ABC):
         self.actuator_is_vfd = False
         self.stopper_config = {}
         self.initialize_actuator(kwargs)
-
-    # @abstractmethod
-    # def run(self):
-    #     """
-    #     An abstract method that is used to define
-    #     the behavior of the conveyor when it is running.
-    #     """
-    #
-    # @abstractmethod
-    # def stop(self):
-    #     """
-    #     An abstract method that is used to define
-    #     the behavior of the conveyor when it is stopped.
-    #     """
 
     def initialize_actuator(self, kwargs):
         """
@@ -179,10 +167,13 @@ class Conveyor(ABC):
         box logic is set to True in the dictionary and False if it
         is not set to True in the dictionary.
         """
-        sensor = kwargs.get(BOX_DETECTION_SENSOR_NAME)
-        self.reverse_box_logic = kwargs.get(REVERSE_BOX_LOGIC).lower() == 'true'
-        if sensor:
-            self.box_sensor = self.system_state.machine.get_input(sensor)
+        sensor_config = kwargs.get(BOX_DETECTION_SENSOR_CONFIG, {})
+        self.reverse_box_logic = sensor_config.get(REVERSE_BOX_LOGIC) == 'true'
+        if sensor_config.get(BOX_SENSOR_PRESENT):
+            self.box_sensor = self.system_state.machine.get_input(sensor_config.get(BOX_SENSOR_NAME))
+            self.sensor_topic = format_message(mqtt_topics['sensor'],
+                                               device=self.box_sensor.configuration.device,
+                                               port=self.box_sensor.configuration.port)
         else:
             self.box_sensor = None
 
@@ -320,6 +311,7 @@ class Conveyor(ABC):
         If the actuator is not a vfd, it moves the conveyor continuously
         at the speed and acceleration set in the parameters.
         """
+        self.system_state.publish_conv_state(self.index, mqtt_messages['convRunning'])
         if self.actuator_is_vfd:
             self.actuator.move_forward()
         else:
@@ -332,6 +324,7 @@ class Conveyor(ABC):
         If the actuator is not a vfd, it stops the conveyor with the deceleration
         set in the parameters.
         """
+        self.system_state.publish_conv_state(self.index, mqtt_messages['convStopped'])
         if self.actuator_is_vfd:
             self.actuator.stop()
         else:

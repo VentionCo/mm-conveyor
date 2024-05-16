@@ -3,12 +3,12 @@ from conveyor_types.base import Conveyor, ConveyorState
 from conveyor_types.system import SystemState
 from helpers.thread_helpers import InterThreadBool
 from helpers.timer_helper import Timer
-from definitions.conveyor_definitions import RESTART_TIME, ACCUMULATION_TIME
+from conveyor_types.definitions.conveyor_definitions import RESTART_TIME, ACCUMULATION_TIME
 
 
 class AccumulatingConveyor(Conveyor):
-    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool = InterThreadBool(), **kwargs):
-        super().__init__(system_state, **kwargs)
+    def __init__(self, system_state: SystemState, robot_is_picking: InterThreadBool, index, **kwargs):
+        super().__init__(system_state, index, **kwargs)
 
         self.initialize_pusher(kwargs)
 
