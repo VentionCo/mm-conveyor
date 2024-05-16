@@ -15,7 +15,7 @@ import time
 from conveyor_types.system import SystemState
 from conveyor_types.conveyors import ControlAllConveyor
 from helpers.thread_helpers import InterThreadBool
-from conveyor_configuration import get_conveyor_config, configure_conveyors, fake_box
+from helpers.conveyor_configuration import get_conveyor_config, configure_conveyors, fake_box
 from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages, mqtt_topics
 from machinelogic import Machine
 

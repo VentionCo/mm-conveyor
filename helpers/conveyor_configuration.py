@@ -14,7 +14,7 @@ import os
 
 def get_conveyor_config():
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    conveyor_configuration_path = os.path.join(script_dir, "configured_conveyors.json")
+    conveyor_configuration_path = os.path.join(script_dir, '..', 'configurations', 'configured_conveyors.json')
     with open(conveyor_configuration_path) as f:
         configuration_data = json.load(f)
     return configuration_data
