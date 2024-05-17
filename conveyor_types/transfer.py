@@ -13,7 +13,7 @@ class TransferConveyor(Conveyor):
         self.conveyor_state = ConveyorState.INIT
 
     def run(self):
-        self.system_state.publish_conv_state(self.index, mqtt_messages['convRunning'])
+        self.system_state.publish_conv_state(self.index, self.conveyor_state.name)
         if not self.system_state.drives_are_ready and not self.system_state.estop:
             self.conveyor_state = ConveyorState.INIT
             if self.pusher_present:
@@ -59,6 +59,6 @@ class TransferConveyor(Conveyor):
                 self.conveyor_state = ConveyorState.RUNNING
 
     def stop(self):
-        self.system_state.publish_conv_state(self.index, mqtt_messages['convStopped'])
         self.conveyor_state = ConveyorState.STOPPING
+        self.system_state.publish_conv_state(self.index, self.conveyor_state.name)
         self.stop_conveyor()

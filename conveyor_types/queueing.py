@@ -11,8 +11,8 @@ class QueueingConveyor(Conveyor):
         self.conveyor_state = parentConveyor.conveyor_state
 
     def run(self):
+        self.system_state.publish_conv_state(self.index, self.conveyor_state.name)
         if self.parentConveyor.conveyor_state == ConveyorState.RUNNING:
-            self.system_state.publish_conv_state(self.index, mqtt_messages['convRunning'])
             self.conveyor_state = self.parentConveyor.conveyor_state
             self.move_conveyor()
         else:
@@ -20,6 +20,6 @@ class QueueingConveyor(Conveyor):
                 self.stop()
 
     def stop(self):
-        self.system_state.publish_conv_state(self.index, mqtt_messages['convStopped'])
         self.conveyor_state = ConveyorState.STOPPING
+        self.system_state.publish_conv_state(self.index, self.conveyor_state.name)
         self.stop_conveyor()

@@ -18,7 +18,7 @@ class InfeedConveyor(Conveyor):
         self.not_moving = True
 
     def run(self):
-        self.system_state.publish_conv_state(self.index, mqtt_messages['convRunning'])
+        self.system_state.publish_conv_state(self.index, self.conveyor_state.name)
         if not self.system_state.drives_are_ready and self.system_state.estop:
             self.conveyor_state = ConveyorState.INIT
             if self.pusher_present:
@@ -72,7 +72,7 @@ class InfeedConveyor(Conveyor):
                 self.conveyor_state = ConveyorState.RUNNING
 
     def stop(self):
-        self.system_state.publish_conv_state(self.index, mqtt_messages['convStopped'])
+        self.system_state.publish_conv_state(self.index, self.conveyor_state.name)
         self.conveyor_state = ConveyorState.INIT
         self.stop_conveyor()
         self.restart_conveyor_timer.stop()

@@ -9,6 +9,7 @@ class SimpleConveyor(Conveyor):
         self.initialize_box_sensor(kwargs)
 
     def run(self):
+        self.system_state.publish_conv_state(self.index, self.conveyor_state.name)
         if not self.system_state.drives_are_ready or self.system_state.estop:
             self.conveyor_state = ConveyorState.INIT
             self.stop_conveyor()
@@ -17,11 +18,10 @@ class SimpleConveyor(Conveyor):
             self.stop()
 
         else:
-            self.system_state.publish_conv_state(self.index, mqtt_messages['convRunning'])
             self.conveyor_state = ConveyorState.RUNNING
             self.move_conveyor()
 
     def stop(self):
-        self.system_state.publish_conv_state(self.index, mqtt_messages['convStopped'])
         self.conveyor_state = ConveyorState.STOPPING
+        self.system_state.publish_conv_state(self.index, self.conveyor_state.name)
         self.stop_conveyor()
