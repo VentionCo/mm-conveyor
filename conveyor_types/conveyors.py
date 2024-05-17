@@ -38,3 +38,9 @@ class ControlAllConveyor:
         """
         for conveyor in self.list_of_conveyors:
             conveyor.set_conveyor_state_to_init()
+
+    def update_conveyors(self, new_list_of_conveyors: list):
+        """
+        A method that is used to update the list of conveyors.
+        """
+        self.list_of_conveyors = new_list_of_conveyors

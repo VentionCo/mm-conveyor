@@ -25,8 +25,6 @@ def configure_conveyors(configuration_data, system, robot_is_picking):
     conveyors = []
     index = 1
     for key, conveyor_config in configuration_data[LIST_OF_ALL_CONVEYORS].items():
-        if conveyor_config[ENABLE_CONVEYORS] != "True":
-            continue
         print(conveyor_config)
 
         conveyor_type = conveyor_config[TYPE]

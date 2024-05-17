@@ -1,5 +1,6 @@
 from conveyor_types.base import Conveyor, ConveyorState
 from conveyor_types.system import SystemState
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages
 
 
 class SimpleConveyor(Conveyor):
@@ -16,9 +17,11 @@ class SimpleConveyor(Conveyor):
             self.stop()
 
         else:
+            self.system_state.publish_conv_state(self.index, mqtt_messages['convRunning'])
             self.conveyor_state = ConveyorState.RUNNING
             self.move_conveyor()
 
     def stop(self):
+        self.system_state.publish_conv_state(self.index, mqtt_messages['convStopped'])
         self.conveyor_state = ConveyorState.STOPPING
         self.stop_conveyor()

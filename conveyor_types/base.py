@@ -311,7 +311,6 @@ class Conveyor(ABC):
         If the actuator is not a vfd, it moves the conveyor continuously
         at the speed and acceleration set in the parameters.
         """
-        self.system_state.publish_conv_state(self.index, mqtt_messages['convRunning'])
         if self.actuator_is_vfd:
             self.actuator.move_forward()
         else:
@@ -324,7 +323,6 @@ class Conveyor(ABC):
         If the actuator is not a vfd, it stops the conveyor with the deceleration
         set in the parameters.
         """
-        self.system_state.publish_conv_state(self.index, mqtt_messages['convStopped'])
         if self.actuator_is_vfd:
             self.actuator.stop()
         else:

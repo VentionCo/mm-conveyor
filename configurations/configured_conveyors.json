@@ -1,71 +1,44 @@
 {
-  "ListOfAllConveyors": {
-    "1": {
-      "Type": "SimpleConveyor",
-      "EnableConveyor": "True",
-      "conveyorName": "Simple",
-      "AxisParameters": {
-        "speed": 200,
-        "acceleration": 200,
-        "deceleration": 200
-      },
-      "pusherConfig": {
-        "pusherPresent": "True",
-        "pusherName": "PushPick",
-        "sensorsPresent": "True",
-        "pushReverseIOLogic": "False",
-        "retractReverseIOLogic": "False",
-        "pusherExtendLogic": "Sensor_Based",
-        "pusherRetractLogic": "Sensor_Based",
-        "retractDelay_sec": 0,
-        "extendDelay_sec": 1
-      },
-      "type": "SimpleConveyor",
-      "axisParameters": {
-        "motorType": "DC",
-        "speed": 200,
-        "acceleration": 200,
-        "deceleration": 200
-      },
-      "boxSensorConfig": {
-        "boxSensorName": "Simple",
-        "boxSensorPresent": true,
-        "boxSensorReverseLogic": false
-      }
-    },
-    "2": {
-      "Type": "SimpleConveyor",
-      "EnableConveyor": "True",
-      "conveyorName": "infeed",
-      "AxisParameters": {
-        "speed": 200,
-        "acceleration": 200,
-        "deceleration": 200
-      },
-      "type": "InfeedConveyor",
-      "axisParameters": {
-        "motorType": "AC",
-        "speed": 0,
-        "acceleration": 0,
-        "deceleration": 0
-      },
-      "parentConveyorName": "",
-      "boxSensorConfig": {
-        "boxSensorName": "infeed",
-        "boxSensorPresent": true,
-        "boxSensorReverseLogic": false
-      },
-      "pusherConfig": {
-        "pusherName": "infeedpusher",
-        "pusherPresent": true,
-        "sensorsPresent": true,
-        "pusherReverseIOLogic": false,
-        "retractReverseIOLogic": false,
-        "pusherExtendLogic": "Sensor_Based",
-        "pusherRetractLogic": "",
-        "retractDelay_sec": 0,
-        "extendDelay_sec": 0
-      }
+    "ListOfAllConveyors": {
+        "0": {
+            "conveyorName": "Simple",
+            "type": "SimpleConveyor",
+            "axisParameters": {
+                "motorType": "DC",
+                "speed": 0,
+                "acceleration": 0,
+                "deceleration": 0
+            },
+            "boxSensorConfig": {
+                "boxSensorPresent": true,
+                "boxSensorName": "Simple"
+            }
+        },
+        "1": {
+            "conveyorName": "infeed",
+            "type": "InfeedConveyor",
+            "axisParameters": {
+                "motorType": "AC",
+                "speed": 0,
+                "acceleration": 0,
+                "deceleration": 0
+            },
+            "pusherConfig": {
+                "pusherName": "infeedpusher",
+                "pusherPresent": true,
+                "sensorsPresent": true,
+                "pusherReverseIOLogic": false,
+                "retractReverseIOLogic": false,
+                "pusherExtendLogic": "Sensor_Based",
+                "pusherRetractLogic": "",
+                "retractDelay_sec": 0,
+                "extendDelay_sec": 0
+            },
+            "boxSensorConfig": {
+                "boxSensorName": "infeed",
+                "boxSensorPresent": true,
+                "boxSensorReverseLogic": false
+            }
+        }
     }
-  }
 }

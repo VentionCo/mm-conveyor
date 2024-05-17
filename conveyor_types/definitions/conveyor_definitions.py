@@ -1,5 +1,5 @@
 LIST_OF_ALL_CONVEYORS = "ListOfAllConveyors"
-TYPE = "Type"
+TYPE = "type"
 AXIS_PARAMETERS = "axisParameters"
 ENABLE_CONVEYORS = "EnableConveyor"
 PUSHER_CONFIG = "pusherConfig"

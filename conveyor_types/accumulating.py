@@ -4,6 +4,7 @@ from conveyor_types.system import SystemState
 from helpers.thread_helpers import InterThreadBool
 from helpers.timer_helper import Timer
 from conveyor_types.definitions.conveyor_definitions import RESTART_TIME, ACCUMULATION_TIME
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages
 
 
 class AccumulatingConveyor(Conveyor):
@@ -23,6 +24,7 @@ class AccumulatingConveyor(Conveyor):
         self.robot_is_picking = robot_is_picking
 
     def run(self):
+        self.system_state.publish_conv_state(self.index, mqtt_messages['convRunning'])
         if not self.system_state.drives_are_ready and self.system_state.estop:
             self.conveyor_state = ConveyorState.INIT
             if self.pusher_present:
@@ -93,6 +95,7 @@ class AccumulatingConveyor(Conveyor):
                 self.conveyor_state = ConveyorState.STOPPING
 
     def stop(self):
+        self.system_state.publish_conv_state(self.index, mqtt_messages['convStopped'])
         self.conveyor_state = ConveyorState.INIT
         self.stop_conveyor()
         self.restart_conveyor_timer.stop()
