@@ -3,7 +3,7 @@ import json
 
 
 def write_to_json(payload: str):
-    print(f"@@@@@@@@@@Payload: {payload}")
+    print(f"Payload: {payload}")
     """Write the payload to the JSON file."""
     try:
         data = json.loads(payload)

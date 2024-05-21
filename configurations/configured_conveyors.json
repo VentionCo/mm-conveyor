@@ -39,6 +39,22 @@
                 "boxSensorPresent": true,
                 "boxSensorReverseLogic": false
             }
+        },
+        "2": {
+            "conveyorName": "queueing",
+            "type": "SimpleConveyor",
+            "axisParameters": {
+                "motorType": "AC",
+                "speed": 0,
+                "acceleration": 0,
+                "deceleration": 0
+            },
+            "parentConveyorName": "",
+            "boxSensorConfig": {
+                "boxSensorName": "queueing",
+                "boxSensorPresent": true,
+                "boxSensorReverseLogic": false
+            }
         }
     }
 }

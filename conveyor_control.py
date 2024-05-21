@@ -13,11 +13,7 @@ from helpers.thread_helpers import InterThreadBool
 
 # Setup logging
 logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    handlers=[
-                        logging.FileHandler("conveyor_system.log"),
-                        logging.StreamHandler()
-                    ])
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 machine = Machine()
 system = SystemState(machine)
@@ -71,14 +67,19 @@ def on_restart_command(topic: str, message: str):
 
 
 def conveyor_loop():
+    prev_time = time.perf_counter()
     while not thread_stop_flag.is_set():
         if control_flag.get() and program_run.get() and system.program_run:
             conveyors_list.run_all()
-            logging.debug('running')
+            logging.info('running')
         elif not system.program_run:
             conveyors_list.stop_all()
-            logging.debug('stopped')
-        time.sleep(1)  # Avoid busy waiting
+            logging.info('stopped')
+        time.sleep(0.1)
+        sleep_time = 0.100 - (time.perf_counter() - prev_time)
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+        prev_time = time.perf_counter()
 
 
 # Register MQTT event

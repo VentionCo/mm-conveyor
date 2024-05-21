@@ -75,7 +75,7 @@ class Conveyor(ABC):
         get_status: A method that is used to get the status of the conveyor.
     """
 
-    def __init__(self, system_state: SystemState, index,  **kwargs):
+    def __init__(self, system_state: SystemState, index, **kwargs):
         """ Constructor for the Conveyor class. It initializes the system_state
         and sets the conveyor_state to INIT.
         It also calls the initialize_actuator method."""
@@ -168,14 +168,17 @@ class Conveyor(ABC):
         is not set to True in the dictionary.
         """
         sensor_config = kwargs.get(BOX_DETECTION_SENSOR_CONFIG, {})
-        self.reverse_box_logic = sensor_config.get(REVERSE_BOX_LOGIC) == 'true'
-        if sensor_config.get(BOX_SENSOR_PRESENT):
-            self.box_sensor = self.system_state.machine.get_input(sensor_config.get(BOX_SENSOR_NAME))
-            self.sensor_topic = format_message(mqtt_topics['sensor'],
-                                               device=self.box_sensor.configuration.device,
-                                               port=self.box_sensor.configuration.port)
-        else:
-            self.box_sensor = None
+        try:
+            if sensor_config.get(BOX_SENSOR_PRESENT):
+                self.reverse_box_logic = sensor_config.get(REVERSE_BOX_LOGIC)
+                self.box_sensor = self.system_state.machine.get_input(sensor_config.get(BOX_SENSOR_NAME))
+                self.sensor_topic = format_message(mqtt_topics['sensor'],
+                                                   device=self.box_sensor.configuration.device,
+                                                   port=self.box_sensor.configuration.port)
+            else:
+                self.box_sensor = None
+        except MachineException as e:
+            raise Exception(f"Box sensor not found") from e
 
     def get_box_sensor_state(self):
         """
@@ -203,11 +206,14 @@ class Conveyor(ABC):
         and False if it is not set to True in the dictionary.
         """
         sensor = kwargs.get(ACCUMULATION_SENSOR_NAME)
-        self.reverse_accumulation_logic = kwargs.get(REVERSE_ACCUMULATION_LOGIC).lower() == 'true'
-        if sensor:
-            self.accumulation_sensor = self.system_state.machine.get_input(sensor)
-        else:
-            self.accumulation_sensor = None
+        try:
+            if sensor:
+                self.reverse_accumulation_logic = kwargs.get(REVERSE_ACCUMULATION_LOGIC)
+                self.accumulation_sensor = self.system_state.machine.get_input(sensor)
+            else:
+                self.accumulation_sensor = None
+        except MachineException as e:
+            raise Exception(f"Accumulation sensor not found") from e
 
     def get_accumulation_sensor_state(self):
         """
@@ -236,17 +242,17 @@ class Conveyor(ABC):
         and False if the pusher sensor is not present.
         """
         pusher_params = kwargs.get(PUSHER_CONFIG, {})
-        self.pusher_present = pusher_params.get(PUSHER_PRESENT)
-        if self.pusher_present == "True":
-            self.pusher_present = True
-            self.pusher = self.system_state.machine.get_pneumatic(pusher_params.get(PUSHER_NAME))
-            self.pusher_extend_logic = pusher_params.get(PUSHER_EXTEND_LOGIC)
-            self.pusher_retract_logic = pusher_params.get(PUSHER_RETRACT_LOGIC)
-            self.pusher_extend_delay = pusher_params.get(EXTEND_DELAY_SEC)
-            self.pusher_retract_delay = pusher_params.get(RETRACT_DELAY_SEC)
-            self.pusher_sensor_present = pusher_params.get(SENSORS_PRESENT).lower() == "true"
-        else:
-            self.pusher_present = False
+        try:
+            self.pusher_present = pusher_params.get(PUSHER_PRESENT)
+            if self.pusher_present:
+                self.pusher = self.system_state.machine.get_pneumatic(pusher_params.get(PUSHER_NAME))
+                self.pusher_extend_logic = pusher_params.get(PUSHER_EXTEND_LOGIC)
+                self.pusher_retract_logic = pusher_params.get(PUSHER_RETRACT_LOGIC)
+                self.pusher_extend_delay = pusher_params.get(EXTEND_DELAY_SEC)
+                self.pusher_retract_delay = pusher_params.get(RETRACT_DELAY_SEC)
+                self.pusher_sensor_present = pusher_params.get(SENSORS_PRESENT)
+        except MachineException as e:
+            raise Exception(f"Pneumatic Pusher not found") from e
 
     def pusher_state(self, desired_state):
         """
@@ -277,18 +283,20 @@ class Conveyor(ABC):
         """
         self.stopper_config = kwargs.get(STOPPER_CONFIG, {})
         self.stopper_present = self.stopper_config.get(STOPPER_PRESENT)
-        if self.stopper_present == "True":
-            self.stopper_present = True
-            self.stopper = self.system_state.machine.get_pneumatic(self.stopper_config.get(STOPPER_NAME))
-            self.stopper_extend_logic = self.stopper_config.get(STOPPER_EXTEND_LOGIC)
-            self.stopper_retract_logic = self.stopper_config.get(STOPPER_RETRACT_LOGIC)
-            self.stopper_extend_delay = self.stopper_config.get(EXTEND_DELAY_SEC)
-            self.stopper_retract_delay = self.stopper_config.get(RETRACT_DELAY_SEC)
-            self.stopper_sensor_present = self.stopper_config.get(SENSORS_PRESENT)
-            if self.stopper_sensor_present == "True":
-                self.stopper_sensor = self.system_state.machine.get_input(
-                    self.stopper_config.get(STOPPER_SENSOR_NAME)
-                )
+        try:
+            if self.stopper_present:
+                self.stopper = self.system_state.machine.get_pneumatic(self.stopper_config.get(STOPPER_NAME))
+                self.stopper_extend_logic = self.stopper_config.get(STOPPER_EXTEND_LOGIC)
+                self.stopper_retract_logic = self.stopper_config.get(STOPPER_RETRACT_LOGIC)
+                self.stopper_extend_delay = self.stopper_config.get(EXTEND_DELAY_SEC)
+                self.stopper_retract_delay = self.stopper_config.get(RETRACT_DELAY_SEC)
+                self.stopper_sensor_present = self.stopper_config.get(SENSORS_PRESENT)
+                if self.stopper_sensor_present:
+                    self.stopper_sensor = self.system_state.machine.get_input(
+                        self.stopper_config.get(STOPPER_SENSOR_NAME)
+                    )
+        except MachineException as e:
+            raise Exception(f"Pneumatic Stopper not found") from e
 
     def stopper_state(self, desired_state):
         """
@@ -340,4 +348,3 @@ class Conveyor(ABC):
         It returns the state of the conveyor.
         """
         return self.conveyor_state
-
