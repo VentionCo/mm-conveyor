@@ -1,7 +1,7 @@
 {
     "ListOfAllConveyors": {
         "0": {
-            "conveyorName": "Simple",
+            "conveyorName": "New actuator (2)",
             "type": "SimpleConveyor",
             "axisParameters": {
                 "motorType": "DC",
@@ -11,47 +11,21 @@
             },
             "boxSensorConfig": {
                 "boxSensorPresent": true,
-                "boxSensorName": "Simple"
+                "boxSensorName": "New input"
             }
         },
         "1": {
-            "conveyorName": "infeed",
-            "type": "InfeedConveyor",
-            "axisParameters": {
-                "motorType": "AC",
-                "speed": 0,
-                "acceleration": 0,
-                "deceleration": 0
-            },
-            "pusherConfig": {
-                "pusherName": "infeedpusher",
-                "pusherPresent": true,
-                "sensorsPresent": true,
-                "pusherReverseIOLogic": false,
-                "retractReverseIOLogic": false,
-                "pusherExtendLogic": "Sensor_Based",
-                "pusherRetractLogic": "",
-                "retractDelay_sec": 0,
-                "extendDelay_sec": 0
-            },
-            "boxSensorConfig": {
-                "boxSensorName": "infeed",
-                "boxSensorPresent": true,
-                "boxSensorReverseLogic": false
-            }
-        },
-        "2": {
-            "conveyorName": "queueing",
+            "conveyorName": "New actuator (3)",
             "type": "SimpleConveyor",
             "axisParameters": {
-                "motorType": "AC",
-                "speed": 0,
-                "acceleration": 0,
-                "deceleration": 0
+                "motorType": "DC",
+                "speed": 100,
+                "acceleration": 110,
+                "deceleration": 110
             },
             "parentConveyorName": "",
             "boxSensorConfig": {
-                "boxSensorName": "queueing",
+                "boxSensorName": "New input (2)",
                 "boxSensorPresent": true,
                 "boxSensorReverseLogic": false
             }

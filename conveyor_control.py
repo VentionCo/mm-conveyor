@@ -15,7 +15,7 @@ from helpers.thread_helpers import InterThreadBool
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-machine = Machine()
+machine = Machine('192.168.191.179')
 system = SystemState(machine)
 
 configuration_data = get_conveyor_config()
@@ -91,7 +91,7 @@ system.subscribe_to_control_topics()
 conveyors = configure_conveyors(configuration_data, system, robot_is_picking)
 conveyors_list = ControlAllConveyor(conveyors)
 
-fake_box(system)
+# fake_box(system)
 
 # Start the conveyor loop in a separate thread
 start_conveyor_thread()
