@@ -33,6 +33,8 @@ Within the uuid directory, clone the conveyor library from GitHub:
  git clone https://github.com/VentionCo/mm-conveyor.git 
  ```
 This command adds the conveyor library to your project directory.
+### Note: Editing Conveyor Behavior
+Edit the run function of the type of conveyor you are using within the `conveyor_types` folder as required to suit your application needs.
 
 ## Step 5: Edit the Conveyor Configuration with the custom UI
 1. Download the latest build in the release section [mm-conveyor-ui]('https://github.com/VentionCo/mm-conveyor-ui')
@@ -41,12 +43,19 @@ This command adds the conveyor library to your project directory.
 mkdir ui
 ```
 3. Drag and drop the contents of the build in this directory 
-4. In order to configure the conveyors, the application needs to be running
 
-### Note: Editing Conveyor Behavior
-Edit the run function of the type of conveyor you are using within the `conveyor_types` folder as required to suit your application needs.
+## Step 6: Add the node process to persist the configuration
+1. Drag and drop the `conveyor_config_api.js` file in the root of the Application folder [conveyor-api]('https://github.com/VentionCo/mm-conveyor-ui/blob/main/conveyor_config_api.js')
+2. Configure this process in the `project.json`
+```json
+{
+  "name": "UI API",
+  "command": "node conveyor_config_api.js"
+}
+```
 
-## Step 6: Update the Project Configuration
+
+## Step 7: Update the Project Configuration
 Edit the project.json file in your project's root directory to include a new entry for the conveyor process:
 
 ```json
@@ -57,7 +66,7 @@ Edit the project.json file in your project's root directory to include a new ent
 ```
 This entry ensures that the conveyor process starts with your application.
 
-## Step 7: Reload the Control Center and Run Your Application
+## Step 8: Reload the Control Center and Run Your Application
 After completing the setup, reload the MachineMotion Control Center to update the application view. You can now run your application directly from the Control Center.
 
 ## Conclusion
