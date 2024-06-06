@@ -15,7 +15,7 @@ from helpers.thread_helpers import InterThreadBool
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-machine = Machine('192.168.191.179')
+machine = Machine()
 system = SystemState(machine)
 
 configuration_data = get_conveyor_config()
@@ -96,13 +96,13 @@ conveyors_list = ControlAllConveyor(conveyors)
 # Start the conveyor loop in a separate thread
 start_conveyor_thread()
 
-try:
-    while True:
-        time.sleep(10)
-except KeyboardInterrupt:
-    logging.info("Keyboard Interrupt received, stopping conveyors...")
-    END_PROGRAM = True
-finally:
-    stop_conveyor_thread()
-    conveyors_list.stop_all()
-    logging.info("Conveyors have been stopped. Program terminated.")
+# try:
+while True:
+    time.sleep(10)
+# except KeyboardInterrupt:
+#     logging.info("Keyboard Interrupt received, stopping conveyors...")
+#     END_PROGRAM = True
+# finally:
+#     stop_conveyor_thread()
+#     conveyors_list.stop_all()
+#     logging.info("Conveyors have been stopped. Program terminated.")

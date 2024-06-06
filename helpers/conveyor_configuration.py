@@ -6,6 +6,7 @@ from conveyor_types.accumulating import AccumulatingConveyor
 from conveyor_types.double_pick_infeed import DoublePickInfeedConveyor
 from conveyor_types.follower import FollowerConveyor
 from conveyor_types.queueing import QueueingConveyor
+from conveyor_types.transfer import TransferConveyor
 
 from conveyor_types.definitions.conveyor_definitions import *
 import json
@@ -31,6 +32,7 @@ def configure_conveyors(configuration_data, system, robot_is_picking):
 
         if conveyor_type == "SimpleConveyor":
             simple_conveyor = SimpleConveyor(system, index, **conveyor_config)
+            parent = simple_conveyor
             conveyors.append(simple_conveyor)
         elif conveyor_type == "InfeedConveyor":
             infeed_conveyor = InfeedConveyor(system, robot_is_picking, index, **conveyor_config)
@@ -38,9 +40,11 @@ def configure_conveyors(configuration_data, system, robot_is_picking):
             conveyors.append(infeed_conveyor)
         elif conveyor_type == "AccumulatingConveyor":
             accumulating_conveyor = AccumulatingConveyor(system, robot_is_picking, index, **conveyor_config)
+            parent = accumulating_conveyor
             conveyors.append(accumulating_conveyor)
         elif conveyor_type == "DoublePickInfeedConveyor":
             double_pick_infeed_conveyor = DoublePickInfeedConveyor(system, index, **conveyor_config)
+            parent = double_pick_infeed_conveyor
             conveyors.append(double_pick_infeed_conveyor)
         elif conveyor_type == "FollowerConveyor":
             follower_conveyor = FollowerConveyor(system, parent, index, **conveyor_config)
@@ -48,6 +52,9 @@ def configure_conveyors(configuration_data, system, robot_is_picking):
         elif conveyor_type == "QueueingConveyor":
             queueing_conveyor = QueueingConveyor(system, parent, index, **conveyor_config)
             conveyors.append(queueing_conveyor)
+        elif conveyor_type == "TransferConveyor":
+            transfer_conveyor = TransferConveyor(system, parent, index, **conveyor_config)
+            conveyors.append(transfer_conveyor)
         index = index + 1
     return conveyors
 

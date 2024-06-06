@@ -5,8 +5,8 @@ from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_messages
 
 
 class TransferConveyor(Conveyor):
-    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, **kwargs):
-        super().__init__(system_state, **kwargs)
+    def __init__(self, system_state: SystemState, parentConveyor: Conveyor, index, **kwargs):
+        super().__init__(system_state, index, **kwargs)
         self.initialize_box_sensor(kwargs)
         self.initialize_pusher(kwargs)
         self.parentConveyor = parentConveyor
