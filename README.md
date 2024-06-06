@@ -34,13 +34,17 @@ Within the uuid directory, clone the conveyor library from GitHub:
  ```
 This command adds the conveyor library to your project directory.
 
-## Step 5: Edit the Conveyor Configuration
-1. Navigate to the mm-conveyor directory.
-2. Locate the `template_conveyor_configuration.json` file. This file contains template configurations for various conveyors.
-3. Copy the relevant configurations to `configured_conveyors.json` and adjust them according to your application's requirements. Make sure to rename and customize each configuration as necessary.
+## Step 5: Edit the Conveyor Configuration with the custom UI
+1. Download the latest build in the release section [mm-conveyor-ui]('https://github.com/VentionCo/mm-conveyor-ui')
+2. Create a ui folder in the Application direcotry
+```bash
+mkdir ui
+```
+3. Drag and drop the contents of the build in this directory 
+4. In order to configure the conveyors, the application needs to be running
 
 ### Note: Editing Conveyor Behavior
-Edit the run function within `conveyors.py` as required to suit your application needs.
+Edit the run function of the type of conveyor you are using within the `conveyor_types` folder as required to suit your application needs.
 
 ## Step 6: Update the Project Configuration
 Edit the project.json file in your project's root directory to include a new entry for the conveyor process:
