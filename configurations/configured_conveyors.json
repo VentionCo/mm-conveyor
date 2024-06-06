@@ -1,34 +1,4 @@
 {
     "ListOfAllConveyors": {
-        "0": {
-            "conveyorName": "New actuator (2)",
-            "type": "SimpleConveyor",
-            "axisParameters": {
-                "motorType": "DC",
-                "speed": 0,
-                "acceleration": 0,
-                "deceleration": 0
-            },
-            "boxSensorConfig": {
-                "boxSensorPresent": true,
-                "boxSensorName": "New input"
-            }
-        },
-        "1": {
-            "conveyorName": "New actuator (3)",
-            "type": "SimpleConveyor",
-            "axisParameters": {
-                "motorType": "DC",
-                "speed": 100,
-                "acceleration": 110,
-                "deceleration": 110
-            },
-            "parentConveyorName": "",
-            "boxSensorConfig": {
-                "boxSensorName": "New input (2)",
-                "boxSensorPresent": true,
-                "boxSensorReverseLogic": false
-            }
-        }
     }
 }
