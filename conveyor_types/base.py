@@ -4,7 +4,10 @@ from conveyor_types.system import SystemState
 from conveyor_types.definitions.conveyor_definitions import *
 from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_topics, mqtt_messages, format_message
 from enum import Enum
+import logging
 
+logging.basicConfig(level=logging.ERROR,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 class ConveyorState(Enum):
     """
@@ -138,7 +141,8 @@ class Conveyor(ABC):
                 self.set_actuator_params(kwargs)
                 self.actuator_is_vfd = False
             except MachineException as e:
-                raise Exception(f"Actuator {self.actuator_name} not found") from e
+                logging.error(f"Actuator {self.actuator_name} not found. Waiting for a valid configuration.")
+                # raise Exception(f"Actuator {self.actuator_name} not found") from e
 
     def set_actuator_params(self, kwargs):
         """
@@ -178,7 +182,8 @@ class Conveyor(ABC):
             else:
                 self.box_sensor = None
         except MachineException as e:
-            raise Exception(f"Box sensor not found") from e
+            logging.error(f"Box sensor not found")
+            # raise Exception(f"Box sensor not found") from e
 
     def get_box_sensor_state(self):
         """
@@ -213,7 +218,8 @@ class Conveyor(ABC):
             else:
                 self.accumulation_sensor = None
         except MachineException as e:
-            raise Exception(f"Accumulation sensor not found") from e
+            logging.error(f"Accumulation sensor not found")
+            # raise Exception(f"Accumulation sensor not found") from e
 
     def get_accumulation_sensor_state(self):
         """
@@ -252,7 +258,8 @@ class Conveyor(ABC):
                 self.pusher_retract_delay = pusher_params.get(RETRACT_DELAY_SEC)
                 self.pusher_sensor_present = pusher_params.get(SENSORS_PRESENT)
         except MachineException as e:
-            raise Exception(f"Pneumatic Pusher not found") from e
+            logging.error('Pneumatic Pusher not found')
+            # raise Exception(f"Pneumatic Pusher not found") from e
 
     def pusher_state(self, desired_state):
         """
@@ -296,7 +303,8 @@ class Conveyor(ABC):
                         self.stopper_config.get(STOPPER_SENSOR_NAME)
                     )
         except MachineException as e:
-            raise Exception(f"Pneumatic Stopper not found") from e
+            logging.error('Pneumatic Stopper not found')
+            # raise Exception(f"Pneumatic Stopper not found") from e
 
     def stopper_state(self, desired_state):
         """

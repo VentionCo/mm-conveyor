@@ -49,7 +49,7 @@ def stop_conveyor_thread():
 
 
 def on_restart_command(topic: str, message: str):
-    logging.info(f"Received restart command on topic {topic} with message {message}")
+    print(f"Received restart command on topic {topic} with message {message}")
 
     stop_conveyor_thread()
     logging.info("Conveyors stopped")
