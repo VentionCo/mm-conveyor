@@ -1,99 +1,108 @@
-""" This is the main program for the conveyor control system.
-It is responsible for creating the conveyor objects and running the main conveyor loop. 
-The main conveyor loop is responsible for running the conveyors and stopping them
-when the drives are not ready or the system is in an estop state.
-The main conveyor loop also checks for the programRun flag and stops the conveyors if set to False.
-The main conveyor loop also checks for the robotIsPicking flag and stops the conveyors 
-if it is set to True. The main conveyor loop also checks for the
-END_PROGRAM flag and stops the conveyors if it is set to True. 
-The main conveyor loop also checks for the CONVEYORS_ARE_RUNNING flag and
-stops the conveyors if it is set to False. 
-"""
-
+import logging
+import threading
 import time
-
-from conveyors import (SystemState, ControlAllConveyor, SimpleInfeedConveyor, SimplePickConveyor,
-                       SimpleConveyor, InfeedConveyor, AccumulatingConveyor, DoublePickInfeedConveyor)
-
-from helpers import InterThreadBool
-from conveyor_configuration import get_conveyor_config, configure_conveyors, fake_box
 
 from machinelogic import Machine
 
-# machine = Machine('http://192.168.7.2:3100', 'ws://192.168.7.2:9001')
+from configurations.restart_control import write_to_json
+from conveyor_types.conveyors import ControlAllConveyor
+from conveyor_types.definitions.ipc_mqtt_definitions import mqtt_topics
+from conveyor_types.system import SystemState
+from helpers.conveyor_configuration import get_conveyor_config, configure_conveyors, fake_box
+from helpers.thread_helpers import InterThreadBool
+
+# Setup logging
+logging.basicConfig(level=logging.ERROR,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
 machine = Machine()
-
 system = SystemState(machine)
-
-time.sleep(2)
 
 configuration_data = get_conveyor_config()
 robot_is_picking = InterThreadBool()
-PARENT = None
-
-conveyors = configure_conveyors(configuration_data, system, robot_is_picking)
-
-for conveyor in conveyors:
-    print(conveyor.conveyor_state)
-    print(conveyor.system_state.estop)
-    print(conveyor.system_state.drives_are_ready)
-
-# Main conveyor loop program
-conveyors_list = ControlAllConveyor(conveyors)
-
 program_run = InterThreadBool()
-
 END_PROGRAM = False
-CONVEYORS_ARE_RUNNING = False
-prev_time = time.perf_counter()
-fake_box(system)
-program_run.set(True)
-try:
-    system.subscribe_to_control_topics()
 
-    print("System is now listening for MQTT control messages. Press CTRL+C to exit.")
+control_flag = InterThreadBool(True)
+thread_stop_flag = threading.Event()
+conveyor_thread = None
 
-    while not END_PROGRAM:
 
-        if system.program_run:
-            print("Program is running")
-            program_run.set(True)
+def start_conveyor_thread():
+    global conveyor_thread
+    thread_stop_flag.clear()
+    control_flag.set(True)
+    program_run.set(True)
+
+    conveyor_thread = threading.Thread(target=conveyor_loop, daemon=True)
+    conveyor_thread.start()
+    logging.info("Conveyor thread started")
+
+
+def stop_conveyor_thread():
+    global conveyor_thread
+    if conveyor_thread is not None:
+        thread_stop_flag.set()
+        conveyor_thread.join()
+        conveyor_thread = None
+        logging.info("Conveyor thread stopped")
+
+
+def on_restart_command(topic: str, message: str):
+    logging.info(f"Received restart command on topic {topic} with message {message}")
+
+    stop_conveyor_thread()
+    logging.info("Conveyors stopped")
+    time.sleep(1)
+    logging.info("Restarting with new configuration")
+
+    # Write new configuration
+    write_to_json(message)
+    new_configuration_data = get_conveyor_config()
+    new_conveyors = configure_conveyors(new_configuration_data, system, robot_is_picking)
+    conveyors_list.update_conveyors(new_conveyors)
+
+    # Start a new conveyor thread
+    start_conveyor_thread()
+
+
+def conveyor_loop():
+    prev_time = time.perf_counter()
+    while not thread_stop_flag.is_set():
+        if control_flag.get() and program_run.get() and system.program_run:
             conveyors_list.run_all()
-            CONVEYORS_ARE_RUNNING = True
-        if not system.program_run:
-            print("Program is not running")
-            program_run.set(False)
+            logging.info('running')
+        elif not system.program_run:
             conveyors_list.stop_all()
-
+            logging.info('stopped')
         time.sleep(0.1)
         sleep_time = 0.100 - (time.perf_counter() - prev_time)
         if sleep_time > 0:
             time.sleep(sleep_time)
         prev_time = time.perf_counter()
-    # while True:
-    #
-    #     try:
-    #         if program_run.get() and system.drives_are_ready:
-    #             conveyors_list.run_all()
-    #             CONVEYORS_ARE_RUNNING = True
-    #         elif not system.drives_are_ready or system.estop:
-    #             conveyors_list.stop_all()
-    #             CONVEYORS_ARE_RUNNING = False
-    #             program_run.set(False)
-    #         else:
-    #             program_run.set(True)
-    #
-    #     except Exception as e:
-    #         conveyors_list.stop_all()
-    #         print(e)
-    #
-    #
 
-except KeyboardInterrupt:
-    conveyors_list.stop_all()
-    print("Keyboard Interrupt")
-    END_PROGRAM = True
-finally:
-    # Ensure all conveyors are stopped on program exit
-    conveyors_list.stop_all()
-    print("Conveyors have been stopped. Program terminated.")
+
+# Register MQTT event
+logging.info("Registering MQTT event for topic 'conveyors/configured'")
+machine.on_mqtt_event(mqtt_topics['restart'], on_restart_command)
+system.subscribe_to_control_topics()
+
+# Configure conveyors and start controlling them
+conveyors = configure_conveyors(configuration_data, system, robot_is_picking)
+conveyors_list = ControlAllConveyor(conveyors)
+
+# fake_box(system)
+
+# Start the conveyor loop in a separate thread
+start_conveyor_thread()
+
+# try:
+while True:
+    time.sleep(10)
+# except KeyboardInterrupt:
+#     logging.info("Keyboard Interrupt received, stopping conveyors...")
+#     END_PROGRAM = True
+# finally:
+#     stop_conveyor_thread()
+#     conveyors_list.stop_all()
+#     logging.info("Conveyors have been stopped. Program terminated.")

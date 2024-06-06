@@ -35,4 +35,3 @@ class InterThreadBool:
         self.__value = value
 
 
-
