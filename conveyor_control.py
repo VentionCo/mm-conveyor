@@ -12,7 +12,7 @@ from helpers.conveyor_configuration import get_conveyor_config, configure_convey
 from helpers.thread_helpers import InterThreadBool
 
 # Setup logging
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.ERROR,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 machine = Machine()
