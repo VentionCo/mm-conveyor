@@ -26,5 +26,3 @@ yarn-debug.log*
 yarn-error.log*
 
 .vscode/
-
-configurations/configured_conveyors.json
