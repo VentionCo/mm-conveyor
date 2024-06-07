@@ -7,7 +7,7 @@ from conveyor_types.double_pick_infeed import DoublePickInfeedConveyor
 from conveyor_types.follower import FollowerConveyor
 from conveyor_types.queueing import QueueingConveyor
 from conveyor_types.transfer import TransferConveyor
-
+from conveyor_types.custom import CustomConveyor
 from conveyor_types.definitions.conveyor_definitions import *
 import json
 import os
@@ -55,6 +55,9 @@ def configure_conveyors(configuration_data, system, robot_is_picking):
         elif conveyor_type == "TransferConveyor":
             transfer_conveyor = TransferConveyor(system, parent, index, **conveyor_config)
             conveyors.append(transfer_conveyor)
+        elif conveyor_type == "CustomConveyor":
+            custom_conveyor = CustomConveyor(system, robot_is_picking, index, **conveyor_config)
+            conveyors.append(custom_conveyor)
         index = index + 1
     return conveyors
 
