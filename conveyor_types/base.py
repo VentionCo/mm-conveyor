@@ -82,6 +82,7 @@ class Conveyor(ABC):
         """ Constructor for the Conveyor class. It initializes the system_state
         and sets the conveyor_state to INIT.
         It also calls the initialize_actuator method."""
+        self.accumulation_sensor_present = None
         self.sensor_topic = None
         self.pull_sensor = None
         self.push_sensor = None
@@ -210,16 +211,18 @@ class Conveyor(ABC):
         to True if the reverse accumulation logic is set to True in the dictionary
         and False if it is not set to True in the dictionary.
         """
-        sensor = kwargs.get(ACCUMULATION_SENSOR_NAME)
-        try:
-            if sensor:
-                self.reverse_accumulation_logic = kwargs.get(REVERSE_ACCUMULATION_LOGIC)
-                self.accumulation_sensor = self.system_state.machine.get_input(sensor)
-            else:
-                self.accumulation_sensor = None
-        except MachineException as e:
-            logging.error(f"Accumulation sensor not found")
-            # raise Exception(f"Accumulation sensor not found") from e
+        self.accumulation_sensor_present = kwargs.get(ACCUMULATION_SENSOR_PRESENT)
+        if self.accumulation_sensor_present:
+            sensor = kwargs.get(ACCUMULATION_SENSOR_NAME)
+            try:
+                if sensor:
+                    self.reverse_accumulation_logic = kwargs.get(REVERSE_ACCUMULATION_LOGIC)
+                    self.accumulation_sensor = self.system_state.machine.get_input(sensor)
+                else:
+                    self.accumulation_sensor = None
+            except MachineException as e:
+                logging.error(f"Accumulation sensor not found")
+                # raise Exception(f"Accumulation sensor not found") from e
 
     def get_accumulation_sensor_state(self):
         """
